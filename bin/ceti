@@ -1,0 +1,4 @@
+#!/usr/bin/env python3
+import ceti
+import sys
+ceti.main(sys.argv)
