@@ -36,7 +36,6 @@ def to_s3_key(data_dir: str, src: Path) -> Path:
     """Create S3 key to address the file in the bucket"""
 
     key_path = Path('raw') / INGESTION_DATE_UTC / src.relative_to(data_dir)
-
     return key_path
 
 
@@ -48,8 +47,7 @@ def upload_files(s3client, data_dir: str, filelist: Sequence[Path]) -> None:
         local_path = str(src.resolve())
 
         with create_progress_bar(src) as progress:
-            s3client.upload_file(
-                local_path, BUCKET_NAME, s3_key, Callback=progress.update)
+            s3client.upload_file(local_path, BUCKET_NAME, s3_key, Callback=progress.update)
 
 
 def main():
