@@ -21,7 +21,7 @@ pip install -e .
 ## Usage
 
 ```console
-ceti -h
+$ ceti -h
 usage: ceti [command] [options]
 
 optional arguments:
