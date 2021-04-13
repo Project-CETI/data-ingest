@@ -6,7 +6,7 @@ Source code for the data pipeline that starts with ingesting the data from the e
 
 If you want to install from sources:
 
-```bash
+```console
 git clone https://github.com/Project-CETI/data-ingest.git
 cd data-ingest
 pip install .
@@ -14,13 +14,13 @@ pip install .
 
 For developer mode use:
 
-```bash
+```console
 pip install -e .
 ```
 
 ## Usage
 
-```bash
+```console
 ceti -h
 ```
 
@@ -30,6 +30,6 @@ This script contains code necessary to pull the data from whale tags that is on 
 
 See command line arguments:
 
-```bash
+```console
 ceti whaletag -h
 ```
