@@ -3,8 +3,8 @@ from setuptools import setup, find_packages
 setup(
     name='ceti',
     description='CLI data ingestion tools for Project CETI',
-    author='Nikolay Pavlov',
-    author_email='me@nikolaypavlov.com',
+    author='Nikolay Pavlov, Peter Malkin',
+    author_email='me@nikolaypavlov.com, malkin.peter@gmail.com',
     version="1.0.0",
     classifiers=[
         "Programming Language :: Python :: 3",
