@@ -4,7 +4,7 @@ setup(
     name='ceti',
     description='CLI data ingestion tools for Project CETI',
     author='Nikolay Pavlov, Peter Malkin',
-    author_email='me@nikolaypavlov.com, malkin.peter@gmail.com',
+    author_email='me@nikolaypavlov.com, petermalkin@google.com',
     version="1.0.0",
     classifiers=[
         "Programming Language :: Python :: 3",
