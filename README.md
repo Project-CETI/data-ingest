@@ -22,6 +22,15 @@ pip install -e .
 
 ```console
 ceti -h
+usage: ceti [command] [options]
+
+optional arguments:
+  -h, --help  show this help message and exit
+
+Available commands:
+  
+    upload    Uploads local whale data to AWS S3 cloud.
+    whaletag  Discover whale tags on LAN and download data off them.
 ```
 
 ## whaletag
