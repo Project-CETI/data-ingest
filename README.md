@@ -1,17 +1,35 @@
 # data-ingest
+
 Source code for the data pipeline that starts with ingesting the data from the embedded data collection devices (whale tags, moorings, etc), uploads it to the cloud and combines in a unified dataset consumable by the machine learning pipelines for [project CETI](https://www.projectceti.org/).
 
-# data-ingest-whale-tag.py
+## Installation
+
+If you want to install from sources:
+
+```console
+git clone https://github.com/Project-CETI/data-ingest.git
+cd data-ingest
+pip install .
+```
+
+For developer mode use:
+
+```console
+pip install -e .
+```
+
+## Usage
+
+```console
+ceti -h
+```
+
+## whaletag
 
 This script contains code necessary to pull the data from whale tags that is on the same LAN as the machine running the script.
 
-Install requirements:
-```
-pip3 install -r requirements.txt
-```
-
 See command line arguments:
 
-```
-python3 data-ingest-whale-tag.py -h
+```console
+ceti whaletag -h
 ```
