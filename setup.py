@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages 
+from setuptools import setup, find_packages
 
 setup(
     name='ceti',
@@ -9,14 +9,12 @@ setup(
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",        
+        "Operating System :: OS Independent",
     ],
-    package_dir={"": "src"},
-    packages=find_packages(where="src"),
+    packages=find_packages(),
     install_requires=[
-        'findssh',
-        'paramiko',
-        'wheel',
+        'findssh~=1.5.0',
+        'paramiko~=2.7.2',
     ],
     entry_points={
         'console_scripts': [

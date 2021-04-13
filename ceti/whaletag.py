@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 # This script is assumed to be running on a linux x86 computer
 # while being attached to the same wireless network as a charged and
 # running whale tag to pull the data from.
@@ -15,15 +13,17 @@
 # To access a whale tag, connect using ssh on port 22.
 # The username is "pi", the password is "ceticeti".
 
-import argparse
+from argparse import Namespace
 import asyncio
-import findssh
 import hashlib
 import os
-import paramiko
 import re
 import socket
 import sys
+
+import findssh
+import paramiko
+
 
 LOCAL_DATA_PATH = os.path.join(os.getcwd(), "data")
 DEFAULT_USERNAME = "pi"
@@ -199,64 +199,28 @@ def clean_tag(hostname):
         ssh.close()
 
 
-def main():
-    p = argparse.ArgumentParser(
-        "Discover whale tags on LAN and download data off them")
-    p.add_argument(
-        "-l",
-        "--list",
-        help="List available whale tags",
-        action="store_true")
-    p.add_argument(
-        "-t",
-        "--tag",
-        help="Download data from specific tag (by hostname)")
-    p.add_argument(
-        "-a",
-        "--all",
-        help="Download all data from all whale tags",
-        action="store_true")
-    p.add_argument(
-        "-ct",
-        "--clean_tag",
-        help="Removes all collected data from a whale tag (by hostname)")
-    p.add_argument(
-        "-ca",
-        "--clean_all_tags",
-        help="Removes all collected data from all accessible tags",
-        action="store_true")
-
-    if len(sys.argv) == 1:
-        p.print_help(sys.stderr)
-        sys.exit(1)
-
-    P = p.parse_args()
-
-    if P.list:
+def cli(args: Namespace):
+    if args.list:
         tag_list = list_whale_tags_online()
         for tag in tag_list:
             print(tag)
 
-    if P.tag:
-        download_all(P.tag.strip())
+    if args.tag:
+        download_all(args.tag.strip())
 
-    if P.all:
+    if args.all:
         print("Searching for whale tags on LAN")
         tag_list = list_whale_tags_online()
         print("Found: " + str(tag_list))
         for tag in tag_list:
             download_all(tag)
 
-    if P.clean_tag:
-        clean_tag(P.clean_tag.strip())
+    if args.clean_tag:
+        clean_tag(args.clean_tag.strip())
 
-    if P.clean_all_tags:
+    if args.clean_all_tags:
         print("Searching for whale tags on LAN")
         tag_list = list_whale_tags_online()
         print("Found: " + str(tag_list))
         for tag in tag_list:
             clean_tag(tag)
-
-
-if __name__ == "__main__":
-    main()
