@@ -1,4 +1,4 @@
-import argparse
+from argparse import Namespace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Sequence
@@ -50,27 +50,7 @@ def upload_files(s3client, data_dir: str, filelist: Sequence[Path]) -> None:
             s3client.upload_file(local_path, BUCKET_NAME, s3_key, Callback=progress.update)
 
 
-def main():
-    parser = argparse.ArgumentParser("Upload whale data to the AWS S3 cloud")
-
-    parser.add_argument(
-        "-t",
-        "--dry-run",
-        help="List source and destination paths, but do not upload anything",
-        action="store_true")
-
-    parser.add_argument(
-        "-d",
-        "--debug",
-        help="Show debug messages during upload",
-        action="store_true")
-
-    parser.add_argument(
-        "data_directory",
-        type=Path,
-        help="Path to the data directory where all the files are stored")
-
-    args = parser.parse_args()
+def cli(args: Namespace):
     files = get_filelist(args.data_directory)
 
     if args.debug:
@@ -86,7 +66,3 @@ def main():
         s3client = boto3.client('s3', config=botocore_config)
 
         upload_files(s3client, args.data_directory, files)
-
-
-if __name__ == "__main__":
-    main()

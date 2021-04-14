@@ -48,8 +48,8 @@ ceti whaletag -h
 
 ## Uploading data to S3
 
-To upload the files from the data directory run the `data_upload` script:
+To upload the files from the data directory use the `s3upload` command:
 
-```bash
-python -m data_upload path_to_data_dir
+```console
+ceti s3upload path_to_data_dir
 ```
