@@ -16,7 +16,7 @@ MAX_CONCURRENCY = 20
 INGESTION_DATE_UTC = datetime.now(timezone.utc).strftime('%Y-%m-%d')
 
 
-def s3object_exists(s3client, bucket_name, s3_key):
+def s3object_exists(s3client, bucket_name: str, s3_key: str) -> bool:
 
     try:
         results = s3client.list_objects(Bucket=bucket_name, Prefix=s3_key)
