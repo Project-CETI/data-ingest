@@ -1,6 +1,7 @@
 from argparse import Namespace
 from datetime import datetime, timezone
 from pathlib import Path
+import re
 import tempfile
 from typing import Sequence
 
@@ -52,7 +53,16 @@ def get_filelist(src_dir: str) -> Sequence[Path]:
 def to_s3_key(data_dir: str, src: Path) -> Path:
     """Create S3 key to address the file in the bucket"""
 
-    key_path = Path('raw') / INGESTION_DATE_UTC / src.relative_to(data_dir)
+    local_file_path = str(src.relative_to(data_dir))
+    if not re.match(r".+\/.+", local_file_path):
+        # The file we are trying to upload is not
+        # in the local folder that defines the device
+        # that captured this file.
+        # Therefore, it should be uploaded into
+        # the "/unknown-device/" folder in S3
+        local_file_path = "unknown-device/"+local_file_path
+
+    key_path = Path('raw') / INGESTION_DATE_UTC / local_file_path
     return key_path
 
 
