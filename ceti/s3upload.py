@@ -16,13 +16,14 @@ MAX_CONCURRENCY = 20
 INGESTION_DATE_UTC = datetime.now(timezone.utc).strftime('%Y-%m-%d')
 
 
-def get_s3_filenames(s3client, bucket_name: str) -> list:
-    hashes = list()
-    try:
-        for key in s3client.list_objects(Bucket='bucket_name')['Contents']:
-            hashes.append(Path(key['Key']).stem)
-    finally:
-        return hashes
+def is_file_exists(s3client, bucket_name: str, s3_key: str) -> bool:
+    """Check if the file with the same S3 key already exist in the cloud"""
+    results = s3client.list_objects(Bucket=bucket_name, Prefix=s3_key)
+
+    if ('Contents' in results):
+        return True
+
+    return False
 
 
 def create_progress_bar(file_path: Path) -> tqdm:
@@ -44,36 +45,33 @@ def get_filelist(src_dir: str) -> Sequence[Path]:
     return [p for p in sorted(path.glob('**/*')) if p.is_file()]
 
 
-def to_s3_key(data_dir: str, src: Path, s3filenames: list) -> Path:
+def to_s3_key(data_dir: str, src: Path) -> Path:
     """Create S3 key to address the file in the bucket"""
 
-    filename = str(src.relative_to(data_dir))
-    print(f"hashing {src}")
-    hash = str(sha256sum(str(src.resolve())))
-    if hash in s3filenames:
-        return None
-    filename = filename.replace(src.stem, hash)
+    filename = src.relative_to(data_dir)
+    hash = sha256sum(str(src.resolve()))
 
-    if not re.match(r".+\/.+", filename):
+    if not re.match(r".+\/.+", str(filename)):
         # The file we are trying to upload is not
         # in the local folder that defines the device
         # that captured this file.
         # Therefore, it should be uploaded into
         # the "/unknown-device/" folder in S3
-        filename = "unknown-device/"+filename
+        filename = Path("unknown-device")
 
-    key_path = Path('raw') / INGESTION_DATE_UTC / filename
-    return key_path
+    return Path('raw') / INGESTION_DATE_UTC / filename.parent / hash / filename.name
 
 
-def upload_files(s3client, data_dir: str, filelist: Sequence[Path], s3filenames: list) -> None:
+def sync_files(s3client, data_dir: str, filelist: Sequence[Path]) -> None:
     """Execute file upload procedure"""
 
     for src in filelist:
-        s3_key = str(to_s3_key(data_dir, src, s3filenames))
-        if not s3_key:
-            continue
+        s3_key = str(to_s3_key(data_dir, src))
         local_path = str(src.resolve())
+
+        if is_file_exists(s3client, BUCKET_NAME, s3_key):
+            print(f"{src} alredy exist on S3. Skipping... ")
+            continue
 
         with create_progress_bar(src) as progress:
             s3client.upload_file(local_path, BUCKET_NAME, s3_key, Callback=progress.update)
@@ -84,15 +82,14 @@ def cli(args: Namespace):
     files = get_filelist(args.data_directory)
     botocore_config = botocore.config.Config(max_pool_connections=MAX_CONCURRENCY)
     s3client = boto3.client('s3', config=botocore_config)
-    s3filenames = get_s3_filenames(s3client, BUCKET_NAME)
 
     if args.debug:
         boto3.set_stream_logger('')
 
     if args.dry_run:
         for src in files:
-            dst = to_s3_key(args.data_directory, src, s3filenames)
+            dst = to_s3_key(args.data_directory, src)
             print(f"{src} -> s3://{BUCKET_NAME}/{dst}")
 
     else:
-        upload_files(s3client, args.data_directory, files, s3filenames)
+        sync_files(s3client, args.data_directory, files)
