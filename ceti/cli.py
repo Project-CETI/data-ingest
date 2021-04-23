@@ -62,7 +62,6 @@ def main():
         type=Path,
         help="Path to the data directory where all the files are stored")
 
-
     # Parse args and call whatever function was selected
     args = parser.parse_args()
     args.func(args)

@@ -6,9 +6,9 @@ from typing import Sequence
 
 import boto3
 import botocore
-from tqdm import tqdm
 
-from ceti.whaletag import sha256sum
+from ceti.utils import sha256sum, create_hashing_progress_bar, create_uploader_progress_bar
+
 
 # TODO: (nikolay) set this to the project default bucket.
 BUCKET_NAME = 'ceti-test-nikolay'
@@ -26,18 +26,6 @@ def is_file_exists(s3client, bucket_name: str, s3_key: str) -> bool:
     return False
 
 
-def create_progress_bar(file_path: Path) -> tqdm:
-    """Report upload progress and speed"""
-
-    return tqdm(
-        desc=f'uploading {file_path.name}',
-        total=file_path.stat().st_size,
-        unit='B',
-        unit_scale=True,
-        position=0,
-    )
-
-
 def get_filelist(src_dir: str) -> Sequence[Path]:
     """Create a list of files to be uploaded from the data directory"""
 
@@ -49,7 +37,9 @@ def to_s3_key(data_dir: str, src: Path) -> Path:
     """Create S3 key to address the file in the bucket"""
 
     filename = src.relative_to(data_dir)
-    hash = sha256sum(str(src.resolve()))
+
+    with create_hashing_progress_bar(src) as progress:
+        hash = sha256sum(str(src.resolve()), callback=progress.update)
 
     if not re.match(r".+\/.+", str(filename)):
         # The file we are trying to upload is not
@@ -73,7 +63,7 @@ def sync_files(s3client, data_dir: str, filelist: Sequence[Path]) -> None:
             print(f"{src} alredy exist on S3. Skipping... ")
             continue
 
-        with create_progress_bar(src) as progress:
+        with create_uploader_progress_bar(src) as progress:
             s3client.upload_file(local_path, BUCKET_NAME, s3_key, Callback=progress.update)
 
 
@@ -87,8 +77,9 @@ def cli(args: Namespace):
         boto3.set_stream_logger('')
 
     if args.dry_run:
-        for src in files:
-            dst = to_s3_key(args.data_directory, src)
+        paths = [(src, to_s3_key(args.data_directory, src)) for src in files]
+
+        for src, dst in paths:
             print(f"{src} -> s3://{BUCKET_NAME}/{dst}")
 
     else:
