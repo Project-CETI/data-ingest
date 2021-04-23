@@ -18,6 +18,7 @@ For developer mode use:
 pip install -e .
 ```
 
+
 ## Usage
 
 ```console
@@ -33,6 +34,7 @@ Available commands:
     whaletag  Discover whale tags on LAN and download data off them.
 ```
 
+
 ## whaletag
 
 This script contains code necessary to pull the data from whale tags that is on the same LAN as the machine running the script.
@@ -41,4 +43,12 @@ See command line arguments:
 
 ```console
 ceti whaletag -h
+```
+
+## Uploading data to S3
+
+To upload the files from the data directory use the `s3upload` command:
+
+```console
+ceti s3upload path_to_data_dir
 ```
