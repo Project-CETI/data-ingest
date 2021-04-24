@@ -70,7 +70,7 @@ def sync_files(s3client, data_dir: str, filelist: Sequence[Path]) -> None:
         local_path = str(src.resolve())
 
         if is_file_exists(s3client, BUCKET_NAME, s3_key):
-            print(f"{src} alredy exist on S3. Skipping... ")
+            print(f"{src} already exists in S3. Skipping... ")
             continue
 
         with create_progress_bar(src) as progress:
