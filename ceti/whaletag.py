@@ -15,7 +15,6 @@
 
 from argparse import Namespace
 import asyncio
-import hashlib
 import os
 import re
 import socket
@@ -23,6 +22,8 @@ import sys
 
 import findssh
 import paramiko
+
+from ceti.utils import sha256sum
 
 
 LOCAL_DATA_PATH = os.path.join(os.getcwd(), "data")
@@ -74,18 +75,6 @@ def tag_hostnames(hostnames):
             if (can_connect(hname)):
                 hnames.append(hname)
     return hnames
-
-
-# Get sha256 digest of the local file
-def sha256sum(file_path):
-    h = hashlib.sha256()
-    with open(file_path, 'rb') as file:
-        while True:
-            chunk = file.read(h.block_size)
-            if not chunk:
-                break
-            h.update(chunk)
-    return h.hexdigest()
 
 
 # Prepare the list of files on the remote whale tag that are missing
