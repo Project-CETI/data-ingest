@@ -1,5 +1,9 @@
 from setuptools import setup, find_packages
 
+
+with open("README.md", "r", encoding="utf-8") as f:
+    long_description = f.read()
+
 setup(
     name='ceti',
     description='CLI data ingestion tools for Project CETI',
@@ -11,6 +15,9 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    python_requires=">=3.6",
     packages=find_packages(),
     install_requires=[
         'findssh~=1.5.0',
