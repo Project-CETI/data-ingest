@@ -43,7 +43,7 @@ optional arguments:
 
 Available commands:
 
-    upload    Uploads local whale data to AWS S3 cloud.
+    s3upload  Uploads local whale data to AWS S3 cloud.
     whaletag  Discover whale tags on LAN and download data off them.
 ```
 
@@ -62,5 +62,5 @@ ceti whaletag -h
 To upload the files from the data directory use the `s3upload` command:
 
 ```console
-ceti s3upload path_to_data_dir
+ceti s3upload -h
 ```
