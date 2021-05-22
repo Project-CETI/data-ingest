@@ -22,7 +22,7 @@ setup(
     install_requires=[
         'findssh~=1.5.0',
         'paramiko~=2.7.2',
-        'boto3~=1.7.51',
+        'boto3~=1.17.78',
         'tqdm~=4.60.0',
     ],
     entry_points={
