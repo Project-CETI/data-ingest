@@ -17,6 +17,7 @@ def create_progress_bar(file_path: Path, file_op_description: str) -> tqdm:
         position=0,
     )
 
+
 create_uploader_progress_bar = partial(create_progress_bar, file_op_description="uploading")
 create_hashing_progress_bar = partial(create_progress_bar, file_op_description="hashing")
 
