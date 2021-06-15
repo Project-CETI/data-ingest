@@ -24,6 +24,6 @@ def test_file_upload():
         dst_dir = str(Path(tmpdir) / SESSION_ID)
         shutil.copytree(TEST_DATA_DIR, dst_dir)
 
-        files = s3upload.get_filelist(dst_dir)
+        files = s3upload.get_filelist(tmpdir)
         s3client = boto3.client('s3')
-        s3upload.sync_files(s3client, dst_dir, files)
+        s3upload.sync_files(s3client, tmpdir, files)
