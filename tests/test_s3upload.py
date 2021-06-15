@@ -19,7 +19,7 @@ def test_get_filelist():
 
 def test_file_upload():
     with tempfile.TemporaryDirectory() as dst_dir:
-        shutil.copytree(TEST_DATA_DIR, dst_dir)
+        shutil.copytree(TEST_DATA_DIR, dst_dir, exist_ok=True)
 
         files = s3upload.get_filelist(dst_dir)
         s3client = boto3.client('s3')
