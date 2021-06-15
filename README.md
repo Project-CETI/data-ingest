@@ -1,12 +1,11 @@
 # data-ingest
 
-
 Source code for the CLI tool that ingests the data from the embedded data collection devices (whale tags, moorings, etc) and uploads it to the AWS cloud (S3) to later be combined in a unified dataset consumable by the machine learning pipelines in ApacheSpark for [project CETI](https://www.projectceti.org/).
 The code targets Linux machines, although we attempted to use OS agnostic libraries where possible to ease porting of this code if need be.
 
 There are a few assumptions made in this code.
 
-#### For whale tags.
+#### For whale tags
 
 1) It is assumed that a whale tag will be present on the same LAN, have ssh server running on port 22, and have a hostname of type wt-AABBCCDDEEFF.
 
@@ -17,12 +16,12 @@ There are a few assumptions made in this code.
 4) Whale tags are mechanically isolated to withstand high pressures, so we assume LAN is a WiFi.
 
 #### For moorings
+
 ..and other potential sources of data attached as external storage to the machine that is uploading the data to S3.
 
 1) It is assumed that the data folder contains subfolders that correspond to unique device IDs. For example, a mooring would have its data in a mg-AABBCCDDEEFF subfolder.
 
 2) It is assumed that those subfolders are universally unique and constant.
-
 
 ## Installation from wheel file
 
@@ -35,7 +34,7 @@ pip install ceti-1.0.0-py3-none-any.whl
 ## Installation from source
 
 If you want to install from sources:
-                                                              -
+
 ```console
 git clone https://github.com/Project-CETI/data-ingest.git
 cd data-ingest
@@ -78,34 +77,39 @@ See command line arguments:
 ```console
 ceti whaletag -h
 ```
+
 A typical use case would have a WiFi network with a Linux machine connected to it, and a whale tag's onboard embedded computer also connected to the same WiFi.
 Then one could:
 
 Download all data from all whaletags present on the LAN
+
 ```console
 ceti whaletag -a
 ```
 
 Clean all whaletags. Caution - this is dangerous. It removes all data from the tags. Only do this after you successfully uploaded the data to S3.
+
 ```console
 ceti whaletag -ca
 ```
 
 Find all whaletags on the LAN
+
 ```console
 ceti whaletag -l
 ```
 
 Download data from one specific whaletag
+
 ```console
 ceti whaletag -t wr-AABBCCEEDDFF
 ```
 
 Delete data from the whaletag
+
 ```console
 ceti whaletag -ct wr-AABBCCEEDDFF
 ```
-
 
 ## Uploading data to S3
 
@@ -114,16 +118,19 @@ This command also attempts to deduplicate the data during upload in order to pro
 We aired on the side of caution and decided it is better to sometimes upload more than needed and dedup the data later, than potentially loose precious data.
 
 To get a list of supported commands:
+
 ```console
 ceti s3upload -h
 ```
 
 To preview a list of files and locations for the upload, assuming your data is in ./data:
+
 ```console
 ceti s3upload -t ./data
 ```
 
 To perform actual upload to S3:
+
 ```console
 ceti s3upload ./data
 ```
