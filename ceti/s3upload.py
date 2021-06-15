@@ -1,5 +1,6 @@
 from argparse import Namespace
 from datetime import datetime, timezone
+import os
 from pathlib import Path
 import re
 from typing import Sequence
@@ -10,8 +11,7 @@ import botocore
 from ceti.utils import sha256sum, create_hashing_progress_bar, create_uploader_progress_bar
 
 
-# TODO: (nikolay) set this to the project default bucket.
-BUCKET_NAME = 'ceti-test-nikolay'
+BUCKET_NAME = os.getenv("CETI_BUCKET") or 'ceti-data'
 MAX_CONCURRENCY = 20
 INGESTION_DATE_UTC = datetime.now(timezone.utc).strftime('%Y-%m-%d')
 
