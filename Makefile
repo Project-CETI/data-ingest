@@ -5,7 +5,7 @@ clean:
 	@rm -rf ./dist ./*egg-info
 
 build_tools:
-	@pip install --upgrade pip build
+	@pip install --upgrade pip build bumpversion
 
 build: clean
 	@python -m build --sdist --wheel --outdir dist/ .
