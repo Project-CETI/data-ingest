@@ -132,5 +132,5 @@ ceti s3upload -t ./data
 To perform actual upload to S3:
 
 ```console
-ceti s3upload ./data
+ceti s3upload -h
 ```
