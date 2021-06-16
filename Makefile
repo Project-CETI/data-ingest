@@ -5,10 +5,10 @@ clean:
 	@rm -rf ./dist ./*egg-info
 
 build_tools:
-	@pip install --upgrade pip setuptools wheel bump2version
+	@pip install --upgrade pip build
 
 build: clean
-	@python setup.py sdist bdist_wheel
+	@python -m build --sdist --wheel --outdir dist/ .
 
 bumpversion:
 	@bump2version ${BUMP_LEVEL}
