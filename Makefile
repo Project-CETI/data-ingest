@@ -1,9 +1,16 @@
+BUMP_LEVEL := patch
+
 clean:
 	@python setup.py clean --all
 	@rm -rf ./dist ./*egg-info
 
 build_tools:
-	@pip install --upgrade pip setuptools wheel
+	@pip install --upgrade pip build bumpversion
 
 build: clean
-	@python setup.py sdist bdist_wheel
+	@python -m build --sdist --wheel --outdir dist/ .
+
+bumpversion:
+	@bump2version ${BUMP_LEVEL}
+
+release: bumpversion, build

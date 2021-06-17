@@ -27,6 +27,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --upgrade pip
+        pip install --upgrade build
         pip install -r requirements-tests.txt
         pip install .
     - name: Lint with flake8
@@ -38,7 +39,7 @@ jobs:
     - name: Check types with mypy
       run: |
         mypy --ignore-missing-import .
-    - name: Test with pytest
+    - name: Test code with pytest
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -46,3 +47,6 @@ jobs:
         CETI_BUCKET: ceti-data-test
       run: |
         pytest
+    - name: Test package build
+      run: |
+        python -m build --sdist --wheel --outdir dist/ .
