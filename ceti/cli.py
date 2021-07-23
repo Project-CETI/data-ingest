@@ -5,6 +5,9 @@ from pathlib import Path
 
 from ceti import s3upload, whaletag
 
+from ceti.spark import datapipeline
+from ceti.spark.jobs import SparkJobs
+
 
 def main():
     parser = argparse.ArgumentParser(usage='ceti [command] [options]')
@@ -16,12 +19,12 @@ def main():
     whaletag_parser = subparsers.add_parser(
         'whaletag', help='Discover whale tags on LAN and download data off them.')
     datapipeline_parser = subparsers.add_parser(
-        'datapipeline', help='Launch the processing of the raw data uploaded from CETI sensors to S3 to processed format using AWS EMR cluster.')
+        'datapipeline', help='Launch the processing of the raw data uploaded from CETI sensors to S3 to processed format using AWS EMR cluster.')  # noqa
 
     # Set default callable for each subcommand
     s3upload_parser.set_defaults(func=s3upload.cli)
     whaletag_parser.set_defaults(func=whaletag.cli)
-    datapipeline_parser.set_defaults(func=datapipeline_parser.cli)
+    datapipeline_parser.set_defaults(func=datapipeline.cli)
     parser.set_defaults(func=lambda x: parser.print_help()
                         )  # Print help if no args
 
@@ -70,9 +73,9 @@ def main():
 
     # datapipeline subcommand CLI
     datapipeline_parser.add_argument(
-        "-r",
-        "--run",
-        help="Launch the EMR cluster to process raw data from S3 bucket")
+        "job_name",
+        choices=SparkJobs.names(),
+        help="Launch specific spark job on EMR cluster")
 
     # Parse args and call whatever function was selected
     args = parser.parse_args()
