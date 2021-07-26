@@ -10,7 +10,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  test:
 
     runs-on: ubuntu-latest
     strategy:
@@ -47,6 +47,27 @@ jobs:
         CETI_BUCKET: ceti-data-test
       run: |
         pytest
-    - name: Test package build
+
+  publish:
+
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: test
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+    - name: Build & Publish package
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: us-east-1
       run: |
+        aws codeartifact login --tool twine --repository ceti --domain ceti-repo
+        pip install --upgrade pip
+        pip install --upgrade build
         python -m build --sdist --wheel --outdir dist/ .
+        python -m twine upload --repository codeartifact dist/ceti-*
