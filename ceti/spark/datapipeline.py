@@ -70,7 +70,7 @@ def _create_emr_cluster(job_name: str, job_s3_path: str, bootstrap_s3_path: str)
         JobFlowRole='EMR_EC2_DefaultRole',
         ServiceRole='EMR_DefaultRole')
 
-    return response('JobFlowId')
+    return response['JobFlowId']
 
 
 def submit_job(job: SparkJobs):
@@ -95,7 +95,7 @@ def submit_job(job: SparkJobs):
     ]
 
     upload_files(files_to_upload)
-    _create_emr_cluster(job.name, job_script_s3_path, bootstrap_script_s3_path)
+    return _create_emr_cluster(job.name, job_script_s3_path, bootstrap_script_s3_path)
 
 
 def cli(args: Namespace):
