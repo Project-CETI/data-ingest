@@ -9,7 +9,7 @@ setup(
     description='CLI data ingestion tools for Project CETI',
     author='Nikolay Pavlov, Peter Malkin',
     author_email='me@nikolaypavlov.com, petermalkin@google.com',
-    version="1.0.7",
+    version="1.0.8",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
