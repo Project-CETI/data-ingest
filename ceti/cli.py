@@ -5,19 +5,28 @@ from pathlib import Path
 
 from ceti import s3upload, whaletag
 
+from ceti.spark import datapipeline
+from ceti.spark.jobs import SparkJobs
+
 
 def main():
     parser = argparse.ArgumentParser(usage='ceti [command] [options]')
 
     # Subcommands
     subparsers = parser.add_subparsers(title='Available commands', metavar='')
-    s3upload_parser = subparsers.add_parser('s3upload', help='Uploads local whale data to AWS S3 cloud.')
-    whaletag_parser = subparsers.add_parser('whaletag', help='Discover whale tags on LAN and download data off them.')
+    s3upload_parser = subparsers.add_parser(
+        's3upload', help='Uploads local whale data to AWS S3 cloud.')
+    whaletag_parser = subparsers.add_parser(
+        'whaletag', help='Discover whale tags on LAN and download data off them.')
+    datapipeline_parser = subparsers.add_parser(
+        'datapipeline', help='Launch the processing of the raw data uploaded from CETI sensors to S3 to processed format using AWS EMR cluster.')  # noqa
 
     # Set default callable for each subcommand
     s3upload_parser.set_defaults(func=s3upload.cli)
     whaletag_parser.set_defaults(func=whaletag.cli)
-    parser.set_defaults(func=lambda x: parser.print_help())  # Print help if no args
+    datapipeline_parser.set_defaults(func=datapipeline.cli)
+    parser.set_defaults(func=lambda x: parser.print_help()
+                        )  # Print help if no args
 
     # Whaletag subcommand CLI
     whaletag_parser.add_argument(
@@ -61,6 +70,12 @@ def main():
         "data_directory",
         type=Path,
         help="Path to the data directory where all the files are stored")
+
+    # datapipeline subcommand CLI
+    datapipeline_parser.add_argument(
+        "job_name",
+        choices=SparkJobs.names(),
+        help="Launch specific spark job on EMR cluster")
 
     # Parse args and call whatever function was selected
     args = parser.parse_args()

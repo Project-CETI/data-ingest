@@ -24,7 +24,11 @@ setup(
         'paramiko~=2.7.2',
         'boto3~=1.17.78',
         'tqdm~=4.60.0',
+        'importlib_resources; python_version < "3.9"'
     ],
+    extras_require={
+        'emr': ['pyspark[sql]>=3.1.1,<3.2']
+    },
     entry_points={
         'console_scripts': [
             'ceti = ceti.cli:main'
