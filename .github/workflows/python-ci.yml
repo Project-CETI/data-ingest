@@ -6,6 +6,8 @@ name: Python CI
 on:
   push:
     branches: [ main ]
+    tags:
+      - v*.*.*
   pull_request:
     branches: [ main ]
 
@@ -27,7 +29,6 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --upgrade pip
-        pip install --upgrade build
         pip install -r requirements-tests.txt
         pip install .
     - name: Lint with flake8
@@ -68,6 +69,6 @@ jobs:
       run: |
         aws codeartifact login --tool twine --repository ceti --domain ceti-repo
         pip install --upgrade pip
-        pip install --upgrade build
+        pip install --upgrade build twine
         python -m build --sdist --wheel --outdir dist/ .
         python -m twine upload --repository codeartifact dist/ceti-*

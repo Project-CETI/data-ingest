@@ -9,7 +9,7 @@ setup(
     description='CLI data ingestion tools for Project CETI',
     author='Nikolay Pavlov, Peter Malkin',
     author_email='me@nikolaypavlov.com, petermalkin@google.com',
-    version="1.0.5",
+    version="1.0.14",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
@@ -17,7 +17,7 @@ setup(
     ],
     long_description=long_description,
     long_description_content_type="text/markdown",
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     packages=find_packages(),
     install_requires=[
         'findssh~=1.5.0',
