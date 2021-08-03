@@ -1,5 +1,8 @@
 BUMP_LEVEL := patch
 
+login:
+	@aws codeartifact login --tool pip --repository ceti --domain ceti-repo
+
 login_twine:
 	@aws codeartifact login --tool twine --repository ceti --domain ceti-repo
 

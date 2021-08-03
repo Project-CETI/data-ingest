@@ -28,7 +28,7 @@ There are a few assumptions made in this code.
 First make sure you have [AWS Credentials properly set](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html) to access AWS infrastructure. After that execute:
 
 ```console
-aws codeartifact login --tool pip --repository ceti --domain ceti-repo
+make login
 pip install ceti
 ```
 
