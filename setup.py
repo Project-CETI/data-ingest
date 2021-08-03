@@ -27,7 +27,8 @@ setup(
         'importlib_resources; python_version < "3.9"'
     ],
     extras_require={
-        'emr': ['pyspark[sql]>=3.1.1,<3.2']
+        'emr': ['pyspark[sql]>=3.1.1,<3.2'],
+        'test': ['pytest>=6.1.0', 'flake8>=3.8.3', 'mypy==0.812'],
     },
     entry_points={
         'console_scripts': [
