@@ -29,8 +29,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install --upgrade pip
-        pip install -r requirements-tests.txt
-        pip install .
+        pip install .[test]
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -50,7 +49,7 @@ jobs:
         pytest
 
   publish:
-
+    # Execute this step only when the new 'vX.X.X' tag been published
     if: startsWith(github.ref, 'refs/tags/v')
     needs: test
     runs-on: ubuntu-latest
@@ -67,8 +66,5 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_REGION: us-east-1
       run: |
-        aws codeartifact login --tool twine --repository ceti --domain ceti-repo
         pip install --upgrade pip
-        pip install --upgrade build twine
-        python -m build --sdist --wheel --outdir dist/ .
-        python -m twine upload --repository codeartifact dist/ceti-*
+        make publish
