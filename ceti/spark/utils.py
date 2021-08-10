@@ -34,7 +34,7 @@ def generate_bootstrap_script() -> str:
     script = f"""#!/bin/sh
 
 # Install dependencies
-sudo yum install -y pip
+sudo yum install -y python3-pip
 aws codeartifact login --tool pip --repository ceti --domain ceti-repo
 python -m pip install --upgrade pip
 python -m pip install ceti
