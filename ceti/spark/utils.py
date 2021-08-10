@@ -34,9 +34,11 @@ def generate_bootstrap_script() -> str:
     script = f"""#!/bin/sh
 
 # Install dependencies
+sudo yum install -y pip
 aws codeartifact login --tool pip --repository ceti --domain ceti-repo
-pip install -U ceti == {BUILD_VERSION}
-
+python -m pip install --upgrade pip
+python -m pip install ceti
+sudo ln -s /home/hadoop/.local/bin/ceti /usr/bin/ceti
 """.encode()
 
     with NamedTemporaryFile(delete=False) as f:
