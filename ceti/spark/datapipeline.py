@@ -31,6 +31,14 @@ def _create_emr_cluster(job_name: str, job_s3_path: str, bootstrap_s3_path: str)
 
     steps = [
         {
+            'Name': 'setup Hadoop debugging',
+            'ActionOnFailure': 'TERMINATE_CLUSTER',
+            'HadoopJarStep': {
+                'Jar': 'command-runner.jar',
+                'Args': ['state-pusher-script']
+            }
+        },
+        {
             'Name': job_name,
             'ActionOnFailure': 'TERMINATE_CLUSTER',
             'HadoopJarStep': {
