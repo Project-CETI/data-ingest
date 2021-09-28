@@ -10,7 +10,7 @@ from ceti.spark.utils import generate_bootstrap_script, get_s3_emr_dir, upload_f
 
 # EMR Cluster configuration
 REGION_NAME = os.getenv("AWS_REGION") or 'us-east-1'
-EMR_VERSION = 'emr-6.3.0'
+EMR_VERSION = 'emr-6.4.0'
 NUM_WORKERS = 3
 WORKER_INSTANCE_TYPE = 'm5.xlarge'
 DRIVER_INSTANCE_TYPE = 'm5.xlarge'

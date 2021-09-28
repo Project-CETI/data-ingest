@@ -34,10 +34,9 @@ def generate_bootstrap_script() -> str:
     script = f"""#!/bin/sh
 
 # Install dependencies
-sudo yum install -y python3-pip
-aws codeartifact login --tool pip --repository ceti --domain ceti-repo
-python -m pip install --upgrade pip
-python -m pip install ceti
+/usr/bin/python3 -m pip install pip --upgrade
+PATH=$PATH:/home/hadoop/.local/bin aws codeartifact login --tool pip --repository ceti --domain ceti-repo
+/home/hadoop/.local/bin/pip3 install ceti
 sudo ln -s /home/hadoop/.local/bin/ceti /usr/bin/ceti
 """.encode()
 
