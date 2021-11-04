@@ -31,7 +31,7 @@ def upload_files(path_specs: Sequence[Tuple[str, str]]) -> None:
 def generate_bootstrap_script() -> str:
     """Create a bootstrap script for EMR cluster"""
 
-    script = f"""#!/bin/sh
+    script = """#!/bin/sh
 
 # Install dependencies
 /usr/bin/python3 -m pip install pip --upgrade --no-warn-script-location

@@ -38,7 +38,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Check types with mypy
       run: |
-        mypy --ignore-missing-import .
+        mypy --ignore-missing-imports --follow-imports=skip --disable-error-code=misc ./ceti
     - name: Test code with pytest
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
