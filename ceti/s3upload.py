@@ -71,7 +71,19 @@ def cli(args: Namespace):
 
     files = get_filelist(args.data_directory)
     botocore_config = botocore.config.Config(max_pool_connections=MAX_CONCURRENCY)
-    s3client = boto3.client('s3', config=botocore_config)
+    sts_client = boto3.client('sts', config=botocore_config)
+    assumed_role_object = sts_client.assume_role(
+        RoleArn = "arn:aws:iam::656606567507:role/UpdateS3Role",
+        RoleSessionName = "AssumeRoleSession"
+    )
+    credentials=assumed_role_object['Credentials']
+
+    s3resource = boto3.resource('s3',
+        aws_access_key_id=credentials['AccessKeyId'],
+        aws_secret_access_key=credentials['SecretAccessKey'],
+        aws_session_token=credentials['SessionToken'],
+    )
+    s3client = s3resource.meta.client
 
     if args.debug:
         boto3.set_stream_logger('')
