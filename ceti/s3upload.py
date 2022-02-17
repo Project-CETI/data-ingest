@@ -74,7 +74,8 @@ def cli(args: Namespace):
     sts_client = boto3.client('sts', config=botocore_config)
     assumed_role_object = sts_client.assume_role(
         RoleArn = "arn:aws:iam::656606567507:role/UpdateS3Role",
-        RoleSessionName = "AssumeRoleSession"
+        RoleSessionName = "AssumeRoleSession",
+        DurationSeconds = 43200 # 12 hours
     )
     credentials=assumed_role_object['Credentials']
 
