@@ -7,7 +7,7 @@ from pyspark.sql import SparkSession
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 
-OUTPUT_BUCKET = "s3://ceti-data-test"
+OUTPUT_BUCKET = "s3://projectceti-bucket-021022"
 
 
 def helloworld():
