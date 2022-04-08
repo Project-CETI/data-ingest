@@ -27,6 +27,8 @@ def _create_emr_cluster(job_name: str, job_s3_path: str, bootstrap_s3_path: str)
         'InstanceCount': NUM_WORKERS,
         'KeepJobFlowAliveWhenNoSteps': False,
         'TerminationProtected': False,
+        'Ec2KeyName': 'NewKeyPair',
+        'Configurations': '[{"Classification":"emrfs-site","Properties":{"fs.s3.customAWSCredentialsProvider":"MyAWSCredentialsProviderWithUri"},"Configurations":[]}]',
     }
 
     steps = [

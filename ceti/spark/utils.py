@@ -38,14 +38,8 @@ def generate_bootstrap_script() -> str:
 PATH=$PATH:/home/hadoop/.local/bin aws codeartifact login --tool pip --repository ceti --domain ceti-repo
 /home/hadoop/.local/bin/pip3 install --no-warn-script-location ceti
 sudo ln -s /home/hadoop/.local/bin/ceti /usr/bin/ceti
-export SESSION_NAME=$(cat /mnt/var/lib/info/job-flow.json | grep jobFlowId | cut -f2 -d: | cut -f2 -d'"')
-export $(printf "AWS_ACCESS_KEY_ID=%s AWS_SECRET_ACCESS_KEY=%s AWS_SESSION_TOKEN=%s" \
-$(aws sts assume-role \
---role-arn arn:aws:iam::656606567507:role/UpdateS3Role \
---role-session-name $(echo $SESSION_NAME) \
---region us-east-1 \
---query "Credentials.[AccessKeyId,SecretAccessKey,SessionToken]" \
---output text))
+eval $(aws sts assume-role --role-arn arn:aws:iam::656606567507:role/UpdateS3Role --role-session-name testsessionname | jq -r '.Credentials | "export AWS_ACCESS_KEY_ID=\(.AccessKeyId)\nexport AWS_SECRET_ACCESS_KEY=\(.SecretAccessKey)\nexport AWS_SESSION_TOKEN=\(.SessionToken)\n"')
+aws s3 cp s3://ceti-dev/MyAWSCredentialsProviderWithUri.jar /usr/share/aws/emr/emrfs/auxlib/
 """.encode()
 
     with NamedTemporaryFile(delete=False) as f:
