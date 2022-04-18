@@ -165,3 +165,17 @@ Possible options are `major`, `minor`, `patch` (the default). For example:
 ```console
 BUMP_LEVEL=minor make release
 ```
+
+### Whale tag deployment
+
+On certain versions of the tag hardware, the data from hydrophones is stored in raw format. Convert it before upload with the following script:
+```console
+#!/bin/bash
+OUTDIR="../flac"
+mkdir -p "$OUTDIR"
+for f in *.raw; do
+  flac --channels=3 --bps=16 --sample-rate=96000 --sign=signed --endian=little --force-raw-format "$f" --force --output-name="$OUTDIR/$f.flac" &
+done
+wait
+echo "( ・◡・)つ━☆  All done"
+```
