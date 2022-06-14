@@ -20,7 +20,7 @@ bumpversion:
 	@bump2version ${BUMP_LEVEL}
 
 release: bumpversion
-	@git push origin master --tags
+	@git push origin main --tags
 
 publish: build_tools, build, login_twine
 	@python -m twine upload --repository codeartifact dist/ceti-*
