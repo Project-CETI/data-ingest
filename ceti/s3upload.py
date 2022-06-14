@@ -25,6 +25,16 @@ def is_file_exists(s3client, bucket_name: str, s3_key: str) -> bool:
 
     return False
 
+def is_hash_exists(s3client, bucket_name: str, hash: str) -> bool:
+    """Check if the file with a certain hash has already been uploaded"""
+    s3_key = Path('raw') / "hash" / hash
+    results = s3client.list_objects(Bucket=bucket_name, Prefix=str(s3_key))
+
+    if ('Contents' in results):
+        return True
+
+    return False
+
 
 def get_filelist(src_dir: str) -> Sequence[Path]:
     """Create a list of files to be uploaded from the data directory"""
@@ -38,9 +48,6 @@ def to_s3_key(data_dir: str, src: Path) -> Path:
 
     filename = src.relative_to(data_dir)
 
-    with create_hashing_progress_bar(src) as progress:
-        hash = sha256sum(str(src.resolve()), callback=progress.update)
-
     if not re.match(r".+\/.+", str(filename)):
         # The file we are trying to upload is not
         # in the local folder that defines the device
@@ -49,7 +56,7 @@ def to_s3_key(data_dir: str, src: Path) -> Path:
         # the "/unknown-device/" folder in S3
         filename = Path("unknown-device")
 
-    return Path('raw') / INGESTION_DATE_UTC / filename.parent / hash / filename.name
+    return Path('raw') / INGESTION_DATE_UTC / filename.parent / filename.name
 
 
 def sync_files(s3client, data_dir: str, filelist: Sequence[Path]) -> None:
@@ -59,12 +66,17 @@ def sync_files(s3client, data_dir: str, filelist: Sequence[Path]) -> None:
         s3_key = str(to_s3_key(data_dir, src))
         local_path = str(src.resolve())
 
-        if is_file_exists(s3client, BUCKET_NAME, s3_key):
-            print(f"{src} already exists in S3. Skipping... ")
+        with create_hashing_progress_bar(src) as progress:
+            hash = sha256sum(str(src.resolve()), callback=progress.update)
+
+        if is_hash_exists(s3client, BUCKET_NAME, hash):
+            print(f"Skipping {src}, its hash is already in S3. {hash} ")
             continue
 
         with create_uploader_progress_bar(src) as progress:
             s3client.upload_file(local_path, BUCKET_NAME, s3_key, Callback=progress.update)
+            hash_s3_key = Path('raw') / "hash" / hash
+            s3client.put_object(Body="", Bucket=BUCKET_NAME, Key=str(hash_s3_key))
 
 
 def cli(args: Namespace):
