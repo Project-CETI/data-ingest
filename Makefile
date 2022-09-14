@@ -11,7 +11,7 @@ clean:
 	@rm -rf ./dist ./*egg-info
 
 build_tools:
-	@pip install --upgrade pip build bumpversion twine
+	@pip install --upgrade pip build bumpversion twine virtualenv
 
 build: clean
 	@python -m build --sdist --wheel --outdir dist/ .
@@ -22,5 +22,5 @@ bumpversion:
 release: bumpversion
 	@git push origin main --tags
 
-publish: build_tools, build, login_twine
+publish: build_tools build login_twine
 	@python -m twine upload --repository codeartifact dist/ceti-*
