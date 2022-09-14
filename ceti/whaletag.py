@@ -15,6 +15,7 @@
 
 from argparse import Namespace
 import asyncio
+import ipaddress
 import os
 import re
 import socket
@@ -27,6 +28,7 @@ from ceti.utils import sha256sum
 
 
 LOCAL_DATA_PATH = os.path.join(os.getcwd(), "data")
+DEFAULT_USBGADGET_IPNETWORK = "192.168.11.0/24"
 DEFAULT_USERNAME = "pi"
 DEFAULT_PASSWORD = "ceticeti"
 
@@ -36,29 +38,43 @@ def find_ssh_servers():
     netspec = findssh.netfromaddress(findssh.getLANip())
     coro = findssh.get_hosts(netspec, 22, "ssh", 1.0)
     sys.stdout = open(os.devnull, "w")
-    hosts = asyncio.run(coro)
+    lanhosts = asyncio.run(coro)
     sys.stdout = sys.__stdout__
-    return hosts
+    coro = findssh.get_hosts(ipaddress.IPv4Network(DEFAULT_USBGADGET_IPNETWORK), 22, "ssh", 1.0)
+    sys.stdout = open(os.devnull, "w")
+    usbhosts = asyncio.run(coro)
+    sys.stdout = sys.__stdout__
+    result = []
+    for ip in lanhosts+usbhosts:
+        result.append(str(ip[0]))
+    return result
 
 
 # get hostnames for all ssh servers
-def get_hostnames_by_addr(addrs):
-    hostnames = []
-    for a in addrs:
-        addr = str(a[0])
-        hname = socket.gethostbyaddr(addr)[0]
-        hname = hname.split(".")[0]
-        hostnames.append(hname)
-    return hostnames
+def get_hostname_by_addr(addr):
+    try:
+        # Connect to the remote whale tag
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(
+            hostname=addr,
+            username=DEFAULT_USERNAME,
+            password=DEFAULT_PASSWORD)
+        _, stdout, _ = ssh.exec_command("hostname")
+        hostname = stdout.readline().strip()
+        ssh.close()
+        return hostname
+    except:
+        return ""
 
-
-def can_connect(hostname):
+# Verify we can connect to the remote system using ssh with default credentials
+def can_connect(addr):
     try:
         # test connecting with ssh using default tag password
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(
-            hostname,
+            hostname=addr,
             username=DEFAULT_USERNAME,
             password=DEFAULT_PASSWORD)
         ssh.close()
@@ -72,9 +88,21 @@ def tag_hostnames(hostnames):
     hnames = []
     for hname in hostnames:
         if re.match("wt-[a-z0-9]{12}", hname):
-            if (can_connect(hname)):
-                hnames.append(hname)
+            hnames.append(hname)
     return hnames
+
+
+
+# Find all of the whale tags available on the local LAN
+def list_whale_tags_online():
+    servers = find_ssh_servers()
+    hostnames = []
+    for server in servers:
+        hname = get_hostname_by_addr(server)
+        if (hname):
+            hostnames.append(hname)
+    tags = tag_hostnames(hostnames)
+    return tags
 
 
 # Prepare the list of files on the remote whale tag that are missing
@@ -97,7 +125,7 @@ def create_filelist_to_download(hostname):
         local_files = os.listdir(local_data_folder)
 
         # Check what files are available for download from the tag
-        remote_data_folder = os.path.join("/data", hostname)
+        remote_data_folder = os.path.normpath("/data")
         _, stdout, _ = ssh.exec_command("ls " + remote_data_folder)
         remote_files = stdout.readlines()
 
@@ -124,15 +152,6 @@ def create_filelist_to_download(hostname):
     finally:
         ssh.close()
     return files_to_download
-
-# Find all of the whale tags available on the local LAN
-
-
-def list_whale_tags_online():
-    servers = find_ssh_servers()
-    hostnames = get_hostnames_by_addr(servers)
-    tags = tag_hostnames(hostnames)
-    return tags
 
 # Download a file over sftp
 
@@ -183,7 +202,7 @@ def clean_tag(hostname):
             hostname,
             username=DEFAULT_USERNAME,
             password=DEFAULT_PASSWORD)
-        ssh.exec_command("rm -rf " + os.path.join("/data", hostname, "*"))
+        ssh.exec_command("rm -rf " + os.path.join("/data/","*"))
     finally:
         ssh.close()
 
