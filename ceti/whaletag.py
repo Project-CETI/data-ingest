@@ -97,7 +97,7 @@ def create_filelist_to_download(hostname):
         local_files = os.listdir(local_data_folder)
 
         # Check what files are available for download from the tag
-        remote_data_folder = os.path.join("/data", hostname)
+        remote_data_folder = os.path.normpath("/data")
         _, stdout, _ = ssh.exec_command("ls " + remote_data_folder)
         remote_files = stdout.readlines()
 
@@ -183,7 +183,7 @@ def clean_tag(hostname):
             hostname,
             username=DEFAULT_USERNAME,
             password=DEFAULT_PASSWORD)
-        ssh.exec_command("rm -rf " + os.path.join("/data", hostname, "*"))
+        ssh.exec_command("rm -rf " + os.path.join("/data/","*"))
     finally:
         ssh.close()
 
