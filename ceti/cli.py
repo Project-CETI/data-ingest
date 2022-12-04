@@ -93,9 +93,14 @@ def main():
         action="store_true")
 
     video_offload_parser.add_argument(
-        "data_directory",
+        "data_dir",
         type=Path,
-        help="Path to directory on storage device where files are stored. Path can be copied directly from file explorer")
+        help="Path to directory on storage device where files are stored. Path can be relative or absolute")
+
+    video_offload_parser.add_argument(
+        "id",
+        type=str,
+        help="The ID of the data capture device. This will be checked against the registered IDs in aws. If you are offloading from a shared ceti device, look for a device ID label on the device")
 
     # Parse args and call whatever function was selected
     args = parser.parse_args()

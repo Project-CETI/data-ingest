@@ -171,10 +171,11 @@ BUMP_LEVEL=minor make release
 On certain versions of the tag hardware, the data from hydrophones is stored in raw format. Convert it before upload with the following script:
 ```console
 #!/bin/bash
-OUTDIR="../flac"
+OUTDIR="../flac/${PWD##*/}"
 mkdir -p "$OUTDIR"
 for f in *.raw; do
-  flac --channels=3 --bps=16 --sample-rate=96000 --sign=signed --endian=big --force-raw-format "$f" --force --output-name="$OUTDIR/$f.flac" &
+  IFS='.' read -r -a split_filename <<< "$f"
+  flac --channels=3 --bps=16 --sample-rate=96000 --sign=signed --endian=big --force-raw-format "$f" --force --output-name="$OUTDIR/${split_filename[0]}.flac" &
 done
 wait
 echo "( ・◡・)つ━☆  All done"
