@@ -8,7 +8,7 @@ import botocore
 
 BUCKET_NAME = os.getenv("CETI_BUCKET") or 'ceti-data'
 DEVICE_ID_FILE = "Device ID List.txt"
-VIDEO_DATA_FOLDER = os.path.join(os.getcwd(), "video_data")
+DATA_FOLDER = os.path.join(os.getcwd(), "data")
 SUPPORTED_FILE_EXTENSIONS = ["mp4", "mov", "mks", "avi"]
 
 def get_video_files(data_directory):
@@ -27,7 +27,7 @@ def offload_files(s3client, files_to_offload, data_directory, device_id):
 
     # Prepare the local storage to accept the files
 
-    local_video_data = os.path.join(VIDEO_DATA_FOLDER, device_id)
+    local_video_data = os.path.join(DATA_FOLDER, device_id)
     if not os.path.exists(local_video_data):
         os.makedirs(local_video_data)
     local_files = os.listdir(local_video_data)
