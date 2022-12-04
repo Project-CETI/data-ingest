@@ -108,6 +108,31 @@ Delete data from the whaletag
 ceti whaletag -ct wr-AABBCCEEDDFF
 ```
 
+## Offloading Video
+This script will offload videos from a storage device and place them in appropriately named folders on your local machine. 
+
+To get a list of supported commands:
+
+```console
+ceti video_offload -h
+```
+
+When using this command you will have to specify the ID of the device that captured the video. If the video was captured on a shared ceti device like a drone or gopro, there should be a device ID label on the device. The ID that is given will be checked against a list of registered devices kept in s3: https://s3.console.aws.amazon.com/s3/object/ceti-data?region=us-east-1&prefix=Device+ID+List.txt
+
+If your device is not listed here, you can register it with a unique ID.
+
+To preview a list of files to be offloaded:
+
+```console
+ceti video_offload -t <path_to_video_files> <device_id>
+```
+
+To perform actual video offload:
+
+```console
+ceti video_offload <path_to_video_files> <device_id>
+```
+
 ## Uploading data to S3
 
 To upload the files from the data directory use the `s3upload` command. It establishes connection to the S3 bucket for raw data and attempts to upload all the data from the folder you specify.
