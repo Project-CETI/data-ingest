@@ -3,7 +3,7 @@
 import argparse
 from pathlib import Path
 
-from ceti import s3upload, whaletag, video_offload
+from ceti import s3upload, whaletag, general_offload
 
 from ceti.spark import datapipeline
 from ceti.spark.jobs import SparkJobs
@@ -20,15 +20,15 @@ def main():
         'whaletag', help='Discover whale tags on LAN and download data off them.')
     datapipeline_parser = subparsers.add_parser(
         'datapipeline', help='Launch the processing of the raw data uploaded from CETI sensors to S3 to processed format using AWS EMR cluster.')  # noqa
-    video_offload_parser = subparsers.add_parser(
-        'video_offload', help='Offloads videos from storage device to new folder called video_data. Renames files to epoch time of file creation.')
+    general_offload_parser = subparsers.add_parser(
+        'general_offload', help='Offloads generic data from storage device into \'data\' folder. Renames files to epoch time of file creation.')
 
 
     # Set default callable for each subcommand
     s3upload_parser.set_defaults(func=s3upload.cli)
     whaletag_parser.set_defaults(func=whaletag.cli)
     datapipeline_parser.set_defaults(func=datapipeline.cli)
-    video_offload_parser.set_defaults(func=video_offload.cli)
+    general_offload_parser.set_defaults(func=general_offload.cli)
     parser.set_defaults(func=lambda x: parser.print_help()
                         )  # Print help if no args
 
@@ -81,23 +81,23 @@ def main():
         choices=SparkJobs.names(),
         help="Launch specific spark job on EMR cluster")
 
-    video_offload_parser.add_argument(
+    general_offload_parser.add_argument(
         "-o",
         "--offload",
-        help="Offload videos from storage device")
+        help="Offload files from storage device")
 
-    video_offload_parser.add_argument(
+    general_offload_parser.add_argument(
         "-t",
         "--dry-run",
-        help="List video files found in data directory",
+        help="List files found in data directory",
         action="store_true")
 
-    video_offload_parser.add_argument(
+    general_offload_parser.add_argument(
         "data_dir",
         type=Path,
         help="Path to directory on storage device where files are stored. Path can be relative or absolute")
 
-    video_offload_parser.add_argument(
+    general_offload_parser.add_argument(
         "id",
         type=str,
         help="The ID of the data capture device. This will be checked against the registered IDs in aws. If you are offloading from a shared ceti device, look for a device ID label on the device")
