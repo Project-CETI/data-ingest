@@ -14,6 +14,7 @@
 # The username is "pi", the password is "ceticeti".
 
 from argparse import Namespace
+from datetime import datetime, timezone
 import asyncio
 import ipaddress
 import os
@@ -26,8 +27,13 @@ import paramiko
 
 from ceti.utils import sha256sum
 
+#REMOVE THIS
+import subprocess
+#END REMOVE
 
+OFFLOAD_DATE_UTC = datetime.now(timezone.utc).strftime('%Y-%m-%d')
 LOCAL_DATA_PATH = os.path.join(os.getcwd(), "data")
+TAG_RAW_FOLDER = "tag-raw"
 DEFAULT_USBGADGET_IPNETWORK = "192.168.11.0/24"
 DEFAULT_USERNAME = "pi"
 DEFAULT_PASSWORD = "ceticeti"
@@ -119,7 +125,9 @@ def create_filelist_to_download(hostname):
             password=DEFAULT_PASSWORD)
 
         # Prepare the local storage to accept the files
-        local_data_folder = os.path.join(LOCAL_DATA_PATH, hostname)
+        local_data_folder = os.path.join(LOCAL_DATA_PATH, OFFLOAD_DATE_UTC)
+        local_data_folder = os.path.join(local_data_folder, TAG_RAW_FOLDER)
+        local_data_folder = os.path.join(local_data_folder, hostname)
         if not os.path.exists(local_data_folder):
             os.makedirs(local_data_folder)
         local_files = os.listdir(local_data_folder)
@@ -157,7 +165,9 @@ def create_filelist_to_download(hostname):
 
 
 def download_remote_file(hostname, remote_file):
-    local_file = os.path.join(LOCAL_DATA_PATH, hostname)
+    local_file = os.path.join(LOCAL_DATA_PATH, OFFLOAD_DATE_UTC)
+    local_file = os.path.join(local_file, TAG_RAW_FOLDER)
+    local_file = os.path.join(local_file, hostname)
     local_file = os.path.join(local_file, os.path.basename(remote_file))
     try:
         print("Downloading " + remote_file)
@@ -208,6 +218,8 @@ def clean_tag(hostname):
 
 
 def cli(args: Namespace):
+    #get_all_local_files('wt-b827eb34cf9d')
+
     if args.list:
         tag_list = list_whale_tags_online()
         for tag in tag_list:

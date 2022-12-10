@@ -1,4 +1,5 @@
 from argparse import Namespace
+from datetime import datetime, timezone
 import os
 import time
 import shutil
@@ -9,12 +10,15 @@ import botocore
 BUCKET_NAME = os.getenv("CETI_BUCKET") or 'ceti-data'
 DEVICE_ID_FILE = "Device ID List.txt"
 DATA_FOLDER = os.path.join(os.getcwd(), "data")
+OFFLOAD_DATE_UTC = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+
 
 def offload_files(s3client, files_to_offload, data_directory, device_id):
 
     # Prepare the local storage to accept the files
 
-    local_data = os.path.join(DATA_FOLDER, device_id)
+    local_data = os.path.join(DATA_FOLDER, OFFLOAD_DATE_UTC)
+    local_data = os.path.join(local_data, device_id)
     if not os.path.exists(local_data):
         os.makedirs(local_data)
     local_files = os.listdir(local_data)

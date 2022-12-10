@@ -1,5 +1,5 @@
 #!/bin/bash
-OUTDIR="../flac/${PWD##*/}"
+OUTDIR="../../tag-compressed/${PWD##*/}"
 mkdir -p "$OUTDIR"
 for f in *.raw; do
   IFS='.' read -r -a split_filename <<< "$f"
