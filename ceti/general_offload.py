@@ -12,41 +12,39 @@ BUCKET_NAME = os.getenv("CETI_BUCKET") or 'ceti-data'
 DEVICE_ID_FILE = "Device ID List.txt"
 DATA_FOLDER = os.path.join(os.getcwd(), "data")
 OFFLOAD_DATE_UTC = datetime.now(timezone.utc).strftime('%Y-%m-%d')
-BIRTHTIME_IDENTIFIER = "Birth:"
-BIRTHTIME_FORMAT = 'Birth: %Y-%m-%d %H:%M:%S.%f %z'
+CREATION_TIME_IDENTIFIER = "Birth:"
+CREATION_TIME_FORMAT = 'Birth: %Y-%m-%d %H:%M:%S.%f %z'
 
 
 #Get the epoch time of creation for a given file
 
 def get_epoch_time(file):
-    result = subprocess.check_output(['stat', f'{file}']).decode('utf-8') #Attempt to get the birthtime using 'stat' for linux based os
+    result = subprocess.check_output(['stat', f'{file}']).decode('utf-8') #Attempt to get the creationTime using 'stat' for linux based os
     lines = str(result).splitlines()                                      #Unable to get st_birthtime attribute using os.stat
 
-    birthString = ''
+    creationTimeString = ''
 
     #Extract line with the st_birthtime attribute
     for line in lines:
         line = line.strip()
-        print(line)
-        if BIRTHTIME_IDENTIFIER in line:
-            birthString = line
+        if CREATION_TIME_IDENTIFIER in line:
+            creationTimeString = line
             break
 
-    birthtime = ''
+    creationTime = ''
 
-    if not birthString:
+    try:
+        #Trim nanoseconds to millisenconds             EXAMPLE 
+        strComponents = creationTimeString.split('.') #Split "Birth: 2022-12-19 15:43:41.463041586 -0500"
+        splitStrComponents = strComponents[1].split() #Split "463041586 -0500"
+        creationTimeString = strComponents[0] + '.' + splitStrComponents[0][0:3] + ' ' + splitStrComponents[1] #Combine "Birth: 2022-12-19 15:43:41" + ".463" + " -0500"
+        creationTime = int(datetime.strptime(creationTimeString, CREATION_TIME_FORMAT).timestamp()*1000) #Convert to milliseconds
+    except:
         print(f'WARNING: Could not obtain creation time for file {file}')
         print('Using ctime instead which tracks the last time some file metadata was changed. THIS MAY BE INNACURATE IF NOT USING WINDOWS OS\n')
-        birthtime = os.path.getctime(file)
-    else:
-        #Trim nanoseconds to millisenconds     EXAMPLE 
-        strComponents = birthString.split('.') #Split "Birth: 2022-12-19 15:43:41.463041586 -0500"
-        splitStrComponents = strComponents[1].split() #Split ".463041586 -0500"
-        birthString = strComponents[0] + '.' + splitStrComponents[0][0:3] + ' ' + splitStrComponents[1] #Combine "Birth: 2022-12-19 15:43:41" + "463" + " -0500"
-        birthtime = int(datetime.strptime(birthString, BIRTHTIME_FORMAT).timestamp()*1000) #Convert to milliseconds
-        print(f'BIRTHTIME= {birthtime}')
+        creationTime = int(os.path.getctime(file)*1000) #Millisecond epoch time
 
-    return birthtime
+    return creationTime
 
 
 
