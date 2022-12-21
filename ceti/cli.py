@@ -102,6 +102,12 @@ def main():
         type=str,
         help="The ID of the data capture device. This will be checked against the registered IDs in aws. If you are offloading from a shared ceti device, look for a device ID label on the device")
 
+    general_offload_parser.add_argument(
+        "temp_dir",
+        type=str,
+        help="The temporary directory to stage the files in before uploading to s3"
+    )
+
     # Parse args and call whatever function was selected
     args = parser.parse_args()
     args.func(args)

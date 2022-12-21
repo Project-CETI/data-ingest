@@ -4,13 +4,12 @@ import os
 import subprocess
 import time
 import shutil
-
 import boto3
 import botocore 
 
 BUCKET_NAME = os.getenv("CETI_BUCKET") or 'ceti-data'
 DEVICE_ID_FILE = "Device ID List.txt"
-DATA_FOLDER = os.path.join(os.getcwd(), "data")
+BACKUP_FOLDER = os.path.join(os.getcwd(), "data/backup")
 OFFLOAD_DATE_UTC = datetime.now(timezone.utc).strftime('%Y-%m-%d')
 CREATION_TIME_IDENTIFIER = "Birth:"
 CREATION_TIME_FORMAT = 'Birth: %Y-%m-%d %H:%M:%S.%f %z'
@@ -49,15 +48,17 @@ def get_epoch_time(file):
 
 
 
-def offload_files(s3client, files_to_offload, data_directory, device_id):
+def offload_files(s3client, files_to_offload, data_directory, device_id, temp_dir):
 
-    # Prepare the local storage to accept the files
-
-    local_data = os.path.join(DATA_FOLDER, OFFLOAD_DATE_UTC)
+    # Prepare the local backup storage to accept the files
+    local_data = os.path.join(BACKUP_FOLDER, OFFLOAD_DATE_UTC)
     local_data = os.path.join(local_data, device_id)
     if not os.path.exists(local_data):
         os.makedirs(local_data)
     local_files = os.listdir(local_data)
+
+    temp_folder = os.path.join(temp_dir, OFFLOAD_DATE_UTC)
+    temp_folder = os.path.join(temp_folder, device_id)
 
 
     for file in files_to_offload:
@@ -68,9 +69,15 @@ def offload_files(s3client, files_to_offload, data_directory, device_id):
 
         #Copy and rename file if it is not in directory already
         if not epoch_name in local_files:
+            #Copy to local backup
             shutil.copy(os.path.join(filepath), local_data)
             os.rename(os.path.join(local_data, file), os.path.join(local_data, epoch_name))
             print(f'{file} -> {local_data}/{epoch_name}')
+
+            #Copy to temporary staging directory
+            shutil.copy(os.path.join(filepath), temp_folder)
+            os.rename(os.path.join(temp_folder, file), os.path.join(temp_folder, epoch_name))
+            print(f'{file} -> {temp_folder}/{epoch_name}')
         else:
             print(f'{file} has already been saved to local directory as {local_data}/{epoch_name}')
 
@@ -96,6 +103,9 @@ def cli(args: Namespace):
     elif not args.id:
         print('No data capture device ID was specified')
         return
+    elif not args.temp_dir:
+        print('No temporary staging folder was specified')
+        return
     elif not args.id in registered_device_ids:
         print(f'Device ID \"{args.id}\" has not been registered. The registered IDs are: ')
         print(*registered_device_ids, sep = '\n')
@@ -110,4 +120,4 @@ def cli(args: Namespace):
         for file in file_list:
             print (file)
     else:
-        offload_files(s3client, file_list, args.data_dir, args.id)
+        offload_files(s3client, file_list, args.data_dir, args.id, args.temp_dir)
