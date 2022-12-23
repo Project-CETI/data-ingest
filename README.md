@@ -143,6 +143,8 @@ To perform actual data offload:
 ceti general_offload <path_to_files> <device_id> <temporary_folder>
 ```
 
+**Note that when you use the `general_offload` tool manually, you are responsible for manually deleting the temporary folder.**
+
 ## Uploading data to S3
 
 To upload the files from the data directory use the `s3upload` command. It establishes connection to the S3 bucket for raw data and attempts to upload all the data from the folder you specify.
