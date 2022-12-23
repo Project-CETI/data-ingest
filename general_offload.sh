@@ -1,10 +1,11 @@
 #!/bin/bash
 tempDir=$(mktemp -d)
+echo "Saving to temporary directory $tempDir"
 
 if [ $# -ne 2 ];
   then 
     echo "Not all requied arguments were given"
-    echo "Syntax: 'general_offload <data_directory> <device_id>"
+    echo "Syntax: 'source general_offload.sh <data_directory> <device_id>"
     return
 fi
 

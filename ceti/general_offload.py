@@ -55,8 +55,9 @@ def offload_files(s3client, files_to_offload, data_directory, device_id, temp_di
         os.makedirs(local_data)
     local_files = os.listdir(local_data)
 
-    temp_folder = os.path.join(temp_dir, OFFLOAD_DATE_UTC)
-    temp_folder = os.path.join(temp_folder, device_id)
+    #Create proper folder structure in the temp folder
+    temp_folder = os.path.join(temp_dir, device_id)
+    os.makedirs(temp_folder)
 
 
     for file in files_to_offload:
