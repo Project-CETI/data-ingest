@@ -18,13 +18,13 @@ CREATION_TIME_FORMAT = 'Birth: %Y-%m-%d %H:%M:%S.%f %z'
 #Get the epoch time of creation for a given file
 
 def get_epoch_time(file):
-    result = subprocess.check_output(['stat', f'{file}']).decode('utf-8') #Attempt to get the creationTime using 'stat' for linux based os
-    lines = str(result).splitlines()                                      #Unable to get st_birthtime attribute using os.stat
+    stat_result = subprocess.check_output(['stat', f'{file}']).decode('utf-8') #Attempt to get the creationTime using 'stat'
+    stat_lines = str(stat_result).splitlines()                                 #Unable to get st_birthtime attribute using os.stat within python
 
     creationTimeString = ''
 
     #Extract line with the st_birthtime attribute
-    for line in lines:
+    for line in stat_lines:
         line = line.strip()
         if CREATION_TIME_IDENTIFIER in line:
             creationTimeString = line
@@ -44,8 +44,6 @@ def get_epoch_time(file):
         creationTime = int(os.path.getctime(file)*1000) #Millisecond epoch time
 
     return creationTime
-
-
 
 
 def offload_files(s3client, files_to_offload, data_directory, device_id, temp_dir):
@@ -89,8 +87,6 @@ def get_registered_devices(s3client):
     return stripped_device_ids
     
     
-
-
 def cli(args: Namespace):
     
     print()
