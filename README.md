@@ -108,29 +108,39 @@ Delete data from the whaletag
 ceti whaletag -ct wr-AABBCCEEDDFF
 ```
 
-## Offloading Video
-This script will offload videos from a storage device and place them in appropriately named folders on your local machine. 
+
+
+## Offloading/Uploading Generic Non-Tag Data
+The `general_offload.sh` script will handle all the offloading and uploading for non-tag data. Simply pass the file path to the data, and the ID of the device that captured the data.
+
+If the data was captured on a shared ceti device like a drone or gopro, there should be a device ID label on the device. The ID that is given will be checked against a list of registered devices kept in s3: https://s3.console.aws.amazon.com/s3/object/ceti-data?region=us-east-1&prefix=Device+ID+List.txt
+If your device is not listed here, you can register it with a unique ID.
+
+`general_offload.sh` will create a temporary staging folder to offload the files to. It will also save backup copies of the files in `data/backup`. Once it offloads all the files onto the local mahcine, it will upload them all to s3, then delete the temporary folder.
+
+Example from `data_ingest` directory. **This is the recommended way to offload and upload data** 
+```console
+source general_offload.sh /media/mangohouse/3531-3034/DCIM/100MEDIA/ CETI-DJI_MINI2-1
+```
+
+The `general_offload.sh` script uses other `ceti` tools named `general_offload` and `s3upload`. It just calls them in succession. If you would like to use the `general_offload` tool manually, you can do so, but will need to provide an additional path to the temporary folder to be used.
 
 To get a list of supported commands:
 
 ```console
-ceti video_offload -h
+ceti general_offload -h
 ```
-
-When using this command you will have to specify the ID of the device that captured the video. If the video was captured on a shared ceti device like a drone or gopro, there should be a device ID label on the device. The ID that is given will be checked against a list of registered devices kept in s3: https://s3.console.aws.amazon.com/s3/object/ceti-data?region=us-east-1&prefix=Device+ID+List.txt
-
-If your device is not listed here, you can register it with a unique ID.
 
 To preview a list of files to be offloaded:
 
 ```console
-ceti video_offload -t <path_to_video_files> <device_id>
+ceti general_offload -t <path_to_files> <device_id> <temporary_folder>
 ```
 
-To perform actual video offload:
+To perform actual data offload:
 
 ```console
-ceti video_offload <path_to_video_files> <device_id>
+ceti general_offload <path_to_files> <device_id> <temporary_folder>
 ```
 
 ## Uploading data to S3
