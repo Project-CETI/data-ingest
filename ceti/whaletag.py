@@ -87,10 +87,9 @@ def can_connect(addr):
 def tag_hostnames(hostnames):
     hnames = []
     for hname in hostnames:
-        if re.match("wt-[a-z0-9]{12}", hname):
+        if re.match("wt-[a-z0-9]{6,}", hname):
             hnames.append(hname)
     return hnames
-
 
 
 # Find all of the whale tags available on the local LAN
@@ -153,9 +152,8 @@ def create_filelist_to_download(hostname):
         ssh.close()
     return files_to_download
 
+
 # Download a file over sftp
-
-
 def download_remote_file(hostname, remote_file):
     local_file = os.path.join(LOCAL_DATA_PATH, hostname)
     local_file = os.path.join(local_file, os.path.basename(remote_file))
