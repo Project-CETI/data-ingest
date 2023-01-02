@@ -179,6 +179,8 @@ def download_all(hostname):
     print("Connecting to " + hostname)
     filelist = create_filelist_to_download(hostname)
     for filename in filelist:
+        if "lost+found" in filename:
+            continue
         download_remote_file(hostname, filename)
     print("Done downloading")
 
