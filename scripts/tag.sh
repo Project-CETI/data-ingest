@@ -1,12 +1,15 @@
 #!/bin/bash
 set -e
 
+DATABACKUPDIR="/data-backup"
+
 LOG_FILE="tag-$(date -u +%s).log"
 function log() {
   if [ $# -gt 0 ]
   then
-    echo "$1"
-    echo "$1" >> $LOG_FILE
+    OUTPUT="$1"
+    echo "$OUTPUT"
+    echo "$OUTPUT" >> $LOG_FILE
   fi
 }
 
@@ -45,7 +48,7 @@ function encode {
 
   if [ -z "$(which gzip)" ]
   then
-    log "flac command line tool is missing. Please install it using 'sudo apt install gzip'."
+    log "gzip command line tool is missing. Please install it using 'sudo apt install gzip'."
     exit 1  
   fi
 
@@ -54,52 +57,109 @@ function encode {
     SRCDIR="$1"
   else
     SRCDIR="$(realpath $(pwd))"
-  fi
-  
-  # Set destination
-  OUTDIR="$SRCDIR"
-  mkdir -p "$OUTDIR"
-  for f in *.raw; do
+  fi  
+
+  for f in "$SRCDIR"/*.raw; do
     IFS='.' read -r -a split_filename <<< "$f"
-    log "flac encoding $f to $OUTDIR/${split_filename[0]}.flac"
-    flac --channels=3 --bps=16 --sample-rate=96000 --sign=signed --endian=big --force-raw-format "$f" --force --output-name="$OUTDIR/${split_filename[0]}.flac" &
+    log "flac encoding $f into $SRCDIR/${split_filename[0]}.flac"
+    flac --channels=3 --bps=16 --sample-rate=96000 --sign=signed --endian=big --force-raw-format "$f" --force --output-name="${split_filename[0]}.flac" &
   done
   wait
 
-  for f in *.raw; do
+  for f in "$SRCDIR"/*.raw; do
     log "removing raw file: $f"
     rm "$f"
   done  
 
   #gzip all csv files
-  for f in *.csv; do
-    log "gzipping $f to $OUTDIR/$f.gz"
-    gzip "$f" -c > "$OUTDIR/$f.gz" &
+  for f in "$SRCDIR"/*.csv; do
+    log "gzipping $f to $f.gz"
+    gzip "$f" -c > "$f.gz" &
   done
   wait
 
-  #move all other files
-  for f in *; do
-    log "moving file $f to $OUTDIR/$f"
-    mv "$f" "$OUTDIR/$f"
-  done
+  for f in "$SRCDIR"/*.csv; do
+    log "removing csv file: $f"
+    rm "$f"
+  done  
 
-  "Done compressing files... success"
+  log "Done compressing files... success"
+}
+
+function set_offload_folder {
+  log "creating temporary folder for data offload"
+
+  if [ -d "data" ]
+  then
+    log "$(realpath data) is already present, reusing the existing folder"
+    return
+  fi
+
+  OFFLOADDIR="$(mktemp -d)"
+  log "Creating symlink ./data -> $OFFLOADDIR"
+  ln -s "$OFFLOADDIR" data
+}
+
+function cleanup_offload_folder {
+  log "Cleaning up offload folder"
+  if [ -L "data" ]
+  then
+    log "removing symlink ./data -> $OFFLOADDIR"
+    unlink "data"
+  fi
+  log "removing $OFFLOADDIR"
+  rm -rf "$OFFLOADDIR" 
+}
+
+function backup_uploaded_data {
+  DATABACKUPDIR="$DATABACKUPDIR/$(date +'%Y-%m-%d')/"
+  if [ -z "$(ls -A $(realpath data))" ]
+  then
+    log "./data is empty, skipping backup"
+  else
+    log "copying all files to $DATABACKUPDIR"
+    mkdir -p "$DATABACKUPDIR"
+    cp -rp data/* "$DATABACKUPDIR"
+  fi
+}
+
+function encode_all {
+  log "Attempting to encode all data found in data/"
+  for d in "$(ls data | grep wt-)"; do
+    CURRENTDIR="data/$d"
+    if [ -d "$CURRENTDIR" ]
+    then
+      log "Encoding files in $CURRENTDIR"
+      encode "$CURRENTDIR"
+    fi
+  done
+}
+
+function offload_all_tags {
+  log "Attempting to search for all tags on LAN and offload all data. This may get awhile..."
+  log "$(ceti whaletag -a)"
+}
+
+function s3upload {
+  log "Attempting to upload all offloaded data to s3"
+  log "$(ceti s3upload data)"
+}
+
+function clean_all_tags {
+  log "Attempting to clean all tags"
+  log "$(ceti whaletag -ca)"
 }
 
 function main {
   log "$(date -u) UTC"
   install_latest_ceti
-
-#list all tags
-#for each tag 
-  #make temp folder
-  #offload all data
-  #encode it
-  #s3 upload it
-  #backup a copy
-  #clean tag
-
+  set_offload_folder
+  offload_all_tags
+  encode_all
+  s3upload
+  backup_uploaded_data
+  cleanup_offload_folder
+  clean_all_tags
 }
 
 main
