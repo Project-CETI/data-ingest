@@ -3,7 +3,7 @@
 import argparse
 from pathlib import Path
 
-from ceti import s3upload, whaletag
+from ceti import s3upload, whaletag, general_offload
 
 from ceti.spark import datapipeline
 from ceti.spark.jobs import SparkJobs
@@ -20,11 +20,15 @@ def main():
         'whaletag', help='Discover whale tags on LAN and download data off them.')
     datapipeline_parser = subparsers.add_parser(
         'datapipeline', help='Launch the processing of the raw data uploaded from CETI sensors to S3 to processed format using AWS EMR cluster.')  # noqa
+    general_offload_parser = subparsers.add_parser(
+        'general_offload', help='Offloads generic data from storage device into \'data\' folder. Renames files to epoch time of file creation.')
+
 
     # Set default callable for each subcommand
     s3upload_parser.set_defaults(func=s3upload.cli)
     whaletag_parser.set_defaults(func=whaletag.cli)
     datapipeline_parser.set_defaults(func=datapipeline.cli)
+    general_offload_parser.set_defaults(func=general_offload.cli)
     parser.set_defaults(func=lambda x: parser.print_help()
                         )  # Print help if no args
 
@@ -76,6 +80,33 @@ def main():
         "job_name",
         choices=SparkJobs.names(),
         help="Launch specific spark job on EMR cluster")
+
+    general_offload_parser.add_argument(
+        "-o",
+        "--offload",
+        help="Offload files from storage device")
+
+    general_offload_parser.add_argument(
+        "-t",
+        "--dry-run",
+        help="List files found in data directory",
+        action="store_true")
+
+    general_offload_parser.add_argument(
+        "data_dir",
+        type=Path,
+        help="Path to directory on storage device where files are stored. Path can be relative or absolute")
+
+    general_offload_parser.add_argument(
+        "id",
+        type=str,
+        help="The ID of the data capture device. This will be checked against the registered IDs in aws. If you are offloading from a shared ceti device, look for a device ID label on the device")
+
+    general_offload_parser.add_argument(
+        "temp_dir",
+        type=str,
+        help="The temporary directory to stage the files in before uploading to s3"
+    )
 
     # Parse args and call whatever function was selected
     args = parser.parse_args()
