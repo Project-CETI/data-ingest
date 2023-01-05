@@ -86,6 +86,17 @@ function encode {
   log "Done compressing files... success"
 }
 
+function encode_all {
+  log "Attempting to encode all data found in data/"
+  for d in data/wt-*; do
+    if [ -d "$d" ]
+    then
+      log "Encoding files in $d"
+      encode "$d"
+    fi
+  done
+}
+
 function set_offload_folder {
   log "creating temporary folder for data offload"
 
@@ -123,18 +134,6 @@ function backup_uploaded_data {
   fi
 }
 
-function encode_all {
-  log "Attempting to encode all data found in data/"
-  for d in "$(ls data | grep wt-)"; do
-    CURRENTDIR="data/$d"
-    if [ -d "$CURRENTDIR" ]
-    then
-      log "Encoding files in $CURRENTDIR"
-      encode "$CURRENTDIR"
-    fi
-  done
-}
-
 function offload_all_tags {
   log "Attempting to search for all tags on LAN and offload all data. This may get awhile..."
   log "$(ceti whaletag -a)"
@@ -147,7 +146,7 @@ function s3upload {
 
 function clean_all_tags {
   log "Attempting to clean all tags"
-  log "For now the automated cleaning of the tags is disabled. If everything looks good, please run `ceti whaletag -ca` to erase all data from all tags."
+  log "For now the automated cleaning of the tags is disabled. If everything looks good, please run 'ceti whaletag -ca' to erase all data from all tags."
 #  log "$(ceti whaletag -ca)"
 }
 
