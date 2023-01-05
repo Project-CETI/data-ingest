@@ -99,7 +99,8 @@ def list_whale_tags_online():
     for server in servers:
         hname = get_hostname_by_addr(server)
         if (hname):
-            hostnames.append(hname)
+            if (hname not in hostnames):
+                hostnames.append(hname)
     tags = tag_hostnames(hostnames)
     return tags
 

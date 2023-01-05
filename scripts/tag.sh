@@ -95,7 +95,7 @@ function set_offload_folder {
     return
   fi
 
-  OFFLOADDIR="$(mktemp -d)"
+  export OFFLOADDIR="$(mktemp -d)"
   log "Creating symlink ./data -> $OFFLOADDIR"
   ln -s "$OFFLOADDIR" data
 }
@@ -147,7 +147,8 @@ function s3upload {
 
 function clean_all_tags {
   log "Attempting to clean all tags"
-  log "$(ceti whaletag -ca)"
+  log "For now the automated cleaning of the tags is disabled. If everything looks good, please run `ceti whaletag -ca` to erase all data from all tags."
+#  log "$(ceti whaletag -ca)"
 }
 
 function main {
