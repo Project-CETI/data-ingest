@@ -168,14 +168,12 @@ BUMP_LEVEL=minor make release
 
 ### Whale tag deployment
 
-On certain versions of the tag hardware, the data from hydrophones is stored in raw format. Convert it before upload with the following script:
-```console
-#!/bin/bash
-OUTDIR="../flac"
-mkdir -p "$OUTDIR"
-for f in *.raw; do
-  flac --channels=3 --bps=16 --sample-rate=96000 --sign=signed --endian=big --force-raw-format "$f" --force --output-name="$OUTDIR/$f.flac" &
-done
-wait
-echo "( ・◡・)つ━☆  All done"
-```
+On certain versions of the tag hardware, the data from hydrophones is stored in raw format. Convert it before upload with the script scripts/flacencode.sh
+There's also a convemnience script scripts/tag.sh that does the following automatically:
+1) discover all tags on subnet
+2) create a temporary folder for data offload
+3) download all data from all tags into temporary folder
+4) flac encode all audio, gzip all sensor csv data
+5) copy the back-up of compressed data to /data-backup folder
+6) upload all downloaded and compressed data to s3
+7) clean all tags
