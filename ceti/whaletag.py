@@ -125,8 +125,9 @@ def create_filelist_to_download(hostname):
         local_files = os.listdir(local_data_folder)
 
         # Check what files are available for download from the tag
+        # Ignores any folders in tag
         remote_data_folder = os.path.normpath("/data")
-        _, stdout, _ = ssh.exec_command("ls " + remote_data_folder)
+        _, stdout, _ = ssh.exec_command("ls -p " + remote_data_folder + "| grep -v /")
         remote_files = stdout.readlines()
 
         # Create the list of files to download
@@ -153,6 +154,23 @@ def create_filelist_to_download(hostname):
         ssh.close()
     return files_to_download
 
+#Stops data capture service on whale tag
+def stop_capture_service(hostname):
+    if not can_connect(hostname):
+        print("Could not connect to host: " + str(hostname))
+        return
+    print("Stopping data capture service on whale tag " + hostname)
+    try:
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(
+            hostname,
+            username=DEFAULT_USERNAME,
+            password=DEFAULT_PASSWORD)
+        ssh.exec_command("sudo systemctl stop ceti-tag-data-capture")
+    finally:
+        ssh.close()
+
 
 # Download a file over sftp
 def download_remote_file(hostname, remote_file):
@@ -178,6 +196,7 @@ def download_all(hostname):
         print("Could not connect to host: " + str(hostname))
         return
     print("Connecting to " + hostname)
+    stop_capture_service(hostname)
     filelist = create_filelist_to_download(hostname)
     for filename in filelist:
         if "lost+found" in filename:
@@ -191,6 +210,7 @@ def clean_tag(hostname):
     if not can_connect(hostname):
         print("Could not connect to host: " + str(hostname))
         return
+    stop_capture_service(hostname)
     filelist = create_filelist_to_download(hostname)
     if filelist:
         print("Not all data have been downloaded from this tag. Quitting...")
@@ -203,7 +223,7 @@ def clean_tag(hostname):
             hostname,
             username=DEFAULT_USERNAME,
             password=DEFAULT_PASSWORD)
-        ssh.exec_command("rm -rf " + os.path.join("/data/","*"))
+        ssh.exec_command("sudo rm -rf " + os.path.join("/data/","*.*"))
     finally:
         ssh.close()
 
