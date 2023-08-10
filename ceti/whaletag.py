@@ -20,6 +20,7 @@ import os
 import re
 import socket
 import sys
+import netifaces
 
 import findssh
 import paramiko
@@ -32,21 +33,30 @@ DEFAULT_USBGADGET_IPNETWORK = "192.168.11.0/24"
 DEFAULT_USERNAME = "pi"
 DEFAULT_PASSWORD = "ceticeti"
 
+# get ALL gateway ips
+def getLANips() -> ipaddress.IPv4Address | ipaddress.IPv6Address:
+    gateways = netifaces.gateways()[netifaces.AF_INET]
+    gateway_ips = []
+    for gateway in gateways:
+        gateway_ips.append(ipaddress.ip_address(gateway[0]))    
+
+    return gateway_ips
 
 # Scan the active LAN for servers with open ssh on port 22
 def find_ssh_servers():
-    netspec = findssh.netfromaddress(findssh.getLANip())
-    coro = findssh.get_hosts(netspec, 22, "ssh", 1.0)
-    sys.stdout = open(os.devnull, "w")
-    lanhosts = asyncio.run(coro)
-    sys.stdout = sys.__stdout__
-    coro = findssh.get_hosts(ipaddress.IPv4Network(DEFAULT_USBGADGET_IPNETWORK), 22, "ssh", 1.0)
-    sys.stdout = open(os.devnull, "w")
-    usbhosts = asyncio.run(coro)
-    sys.stdout = sys.__stdout__
     result = []
-    for ip in lanhosts+usbhosts:
-        result.append(str(ip[0]))
+    for gateway_ip in getLANips():
+        netspec = findssh.netfromaddress(gateway_ip)
+        coro = findssh.get_hosts(netspec, 22, "ssh", 1.0)
+        sys.stdout = open(os.devnull, "w")
+        lanhosts = asyncio.run(coro)
+        sys.stdout = sys.__stdout__
+        coro = findssh.get_hosts(ipaddress.IPv4Network(DEFAULT_USBGADGET_IPNETWORK), 22, "ssh", 1.0)
+        sys.stdout = open(os.devnull, "w")
+        usbhosts = asyncio.run(coro)
+        sys.stdout = sys.__stdout__
+        for ip in lanhosts+usbhosts:
+            result.append(str(ip[0]))
     return result
 
 
