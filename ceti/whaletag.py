@@ -34,7 +34,7 @@ DEFAULT_USERNAME = "pi"
 DEFAULT_PASSWORD = "ceticeti"
 
 # get ALL gateway ips
-def getLANips() -> ipaddress.IPv4Address | ipaddress.IPv6Address:
+def getLANips() -> [ipaddress.IPv4Address | ipaddress.IPv6Address]:
     gateways = netifaces.gateways()[netifaces.AF_INET]
     gateway_ips = []
     for gateway in gateways:
