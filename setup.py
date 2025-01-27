@@ -24,7 +24,7 @@ setup(
         'paramiko>=2.10.1',
         'boto3~=1.17.78',
         'tqdm~=4.60.0',
-        'importlib_resources; python_version < "3.9"'
+        'importlib_resources'
     ],
     extras_require={
         'emr': ['pyspark[sql]>=3.1.1,<3.2'],
