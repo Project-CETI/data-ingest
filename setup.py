@@ -21,6 +21,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         'findssh~=1.5.0',
+        'netifaces>=0.11.0',
         'paramiko>=2.10.1',
         'boto3~=1.17.78',
         'tqdm~=4.60.0',
