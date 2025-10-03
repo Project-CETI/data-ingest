@@ -21,7 +21,7 @@ def get_s3_emr_dir(job_name: str) -> Path:
 
 def upload_files(path_specs: Sequence[Tuple[str, str]]) -> None:
     """Upload files to S3 given src / dst tuples"""
-    s3 = boto3.client('s3')
+    s3 = boto3.client('s3', endpoint_url=os.getenv('AWS_ENDPOINT_URL'))
 
     for src, dst in path_specs:
         uri = urlparse(dst)

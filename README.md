@@ -185,6 +185,61 @@ You can build a wheel file for binary distribution of the package. The wheel fil
 make build_tools && make build
 ```
 
+### Testing
+
+The project uses LocalStack to emulate AWS S3 for local testing without requiring AWS credentials.
+
+**Requirements:**
+- Docker (for LocalStack)
+- Python 3.7+ (tested with Python 3.13)
+
+**Resource Requirements:**
+- **Disk Space**: ~1.1 GB (Docker image) + ~50 MB (data volume during tests)
+- **Memory**: ~86 MB RAM (idle), up to ~256 MB during active testing
+- **Network**: Initial download of 1.1 GB Docker image (one-time)
+
+#### Quick Start
+
+```console
+# Run all tests with LocalStack (starts/stops automatically)
+make test-local
+```
+
+This command will:
+1. Start LocalStack (pulls Docker image if needed)
+2. Run all 9 tests against local S3 emulator
+3. Stop and clean up LocalStack
+
+#### Manual Testing
+
+For development and debugging, you can manually control LocalStack and run tests:
+
+```console
+# 1. Start LocalStack container
+make localstack-up
+
+# 2. Load environment variables and run tests
+set -a && source .env.localstack && set +a && pytest
+
+# Or run specific test files
+set -a && source .env.localstack && set +a && pytest tests/test_s3upload.py -v
+
+# 3. Stop LocalStack when done
+make localstack-down
+
+# Optional: Clean LocalStack data (removes all buckets/objects)
+make localstack-clean
+```
+
+**Why manual testing?**
+- Keep LocalStack running between test runs (faster iteration)
+- Run specific test files or functions
+- Debug test failures without restarting container
+
+**Note:** `make test-local` is recommended for CI/CD and final validation - it handles all setup/teardown automatically.
+
+For detailed testing documentation, see [docs/TESTING.md](docs/TESTING.md).
+
 ### Releasing a new version
 
 This package follows [semantic versioning](https://semver.org/) approach and [PEP440](https://www.python.org/dev/peps/pep-0440). In order to release a new version run the following steps:

@@ -22,13 +22,18 @@ setup(
     install_requires=[
         'findssh~=1.5.0',
         'paramiko>=2.10.1',
-        'boto3~=1.17.78',
+        'boto3>=1.17.78',
         'tqdm~=4.60.0',
         'importlib_resources; python_version < "3.9"'
     ],
     extras_require={
         'emr': ['pyspark[sql]>=3.1.1,<3.2'],
-        'test': ['pytest>=6.1.0', 'flake8>=3.8.3', 'mypy==0.812'],
+        'test': [
+            'pytest>=6.1.0',
+            'flake8>=3.8.3',
+            'mypy>=1.0',
+            'pytest-env>=0.6.2'
+        ],
     },
     entry_points={
         'console_scripts': [

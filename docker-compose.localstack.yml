@@ -1,0 +1,24 @@
+services:
+  localstack:
+    image: localstack/localstack:latest
+    container_name: ceti-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+      - DEBUG=0
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=cetitest
+      - AWS_SECRET_ACCESS_KEY=cetitest
+    volumes:
+      - localstack-data:/var/lib/localstack
+      - ./scripts/init-localstack.sh:/etc/localstack/init/ready.d/init-buckets.sh
+    networks:
+      - ceti-test
+
+volumes:
+  localstack-data:
+
+networks:
+  ceti-test:
+    driver: bridge

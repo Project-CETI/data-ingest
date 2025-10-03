@@ -89,9 +89,9 @@ def get_registered_devices(s3client):
     
     
 def cli(args: Namespace):
-    
+
     print()
-    s3client = boto3.client('s3')
+    s3client = boto3.client('s3', endpoint_url=os.getenv('AWS_ENDPOINT_URL'))
     registered_device_ids = get_registered_devices(s3client)
 
     if not os.path.exists(args.data_dir):

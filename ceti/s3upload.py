@@ -83,7 +83,17 @@ def cli(args: Namespace):
 
     files = get_filelist(args.data_directory)
     botocore_config = botocore.config.Config(max_pool_connections=MAX_CONCURRENCY)
-    s3client = boto3.client('s3', config=botocore_config)
+    s3client = boto3.client(
+        's3',
+        config=botocore_config,
+        endpoint_url=os.getenv('AWS_ENDPOINT_URL')
+    )
+
+    # Warn if using LocalStack
+    if os.getenv('AWS_ENDPOINT_URL'):
+        print(f"WARNING: Using LocalStack at {os.getenv('AWS_ENDPOINT_URL')} (not production AWS)")
+        print(f"         Uploading to bucket: {BUCKET_NAME}")
+        print()
 
     if args.debug:
         boto3.set_stream_logger('')
