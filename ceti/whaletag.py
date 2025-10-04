@@ -20,10 +20,12 @@ import os
 import re
 import socket
 import sys
+import time
 import netifaces
 
 import findssh
 import paramiko
+from tqdm import tqdm
 
 from ceti.utils import sha256sum
 
@@ -164,12 +166,12 @@ def create_filelist_to_download(hostname):
         ssh.close()
     return files_to_download
 
-#Stops data capture service on whale tag
+#Stops data capture service on device
 def stop_capture_service(hostname):
     if not can_connect(hostname):
         print("Could not connect to host: " + str(hostname))
         return
-    print("Stopping data capture service on whale tag " + hostname)
+    print("Stopping data capture service on device " + hostname)
     try:
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -186,8 +188,12 @@ def stop_capture_service(hostname):
 def download_remote_file(hostname, remote_file):
     local_file = os.path.join(LOCAL_DATA_PATH, hostname)
     local_file = os.path.join(local_file, os.path.basename(remote_file))
+
+    ssh = None
+    sftp = None
+    progress_bar = None
+
     try:
-        print("Downloading " + remote_file)
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(
@@ -195,37 +201,54 @@ def download_remote_file(hostname, remote_file):
             username=DEFAULT_USERNAME,
             password=DEFAULT_PASSWORD)
         sftp = ssh.open_sftp()
-        sftp.get(remote_file, local_file)
+
+        # Get remote file size for progress bar
+        remote_size = sftp.stat(remote_file).st_size
+
+        # Create progress bar
+        progress_bar = tqdm(
+            desc=f"Downloading {os.path.basename(remote_file)}",
+            total=remote_size,
+            unit='B',
+            unit_scale=True,
+            unit_divisor=1024,
+            position=0,
+            leave=True
+        )
+
+        # Callback to update progress bar
+        def progress_callback(transferred, total):
+            progress_bar.update(transferred - progress_bar.n)
+
+        # Download with progress tracking
+        sftp.get(remote_file, local_file, callback=progress_callback)
+
     finally:
-        sftp.close()
-        ssh.close()
+        if progress_bar:
+            progress_bar.close()
+        if sftp:
+            sftp.close()
+        if ssh:
+            ssh.close()
 
 
 def download_all(hostname):
     if not can_connect(hostname):
         print("Could not connect to host: " + str(hostname))
         return
+
     print("Connecting to " + hostname)
     stop_capture_service(hostname)
-    filelist = create_filelist_to_download(hostname)
-    for filename in filelist:
-        if "lost+found" in filename:
-            continue
-        download_remote_file(hostname, filename)
-    print("Done downloading")
 
-
-# CAREFUL: ERASES ALL DATA FROM WHALE TAG
-def clean_tag(hostname):
-    if not can_connect(hostname):
-        print("Could not connect to host: " + str(hostname))
-        return
-    stop_capture_service(hostname)
+    # Get list of files to download
     filelist = create_filelist_to_download(hostname)
-    if filelist:
-        print("Not all data have been downloaded from this tag. Quitting...")
+    filelist = [f for f in filelist if "lost+found" not in f]
+
+    if not filelist:
+        print("No new files to download")
         return
-    print("Erasing all collected data from whale tag " + hostname)
+
+    # Calculate total size and count
     try:
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -233,7 +256,93 @@ def clean_tag(hostname):
             hostname,
             username=DEFAULT_USERNAME,
             password=DEFAULT_PASSWORD)
+        sftp = ssh.open_sftp()
+
+        total_size = 0
+        for filename in filelist:
+            try:
+                total_size += sftp.stat(filename).st_size
+            except:
+                pass
+
+        sftp.close()
+        ssh.close()
+
+        # Print summary
+        print(f"\nFound {len(filelist)} file(s) to download ({total_size / (1024**2):.2f} MB total)")
+        print("-" * 60)
+
+    except:
+        print(f"\nFound {len(filelist)} file(s) to download")
+        print("-" * 60)
+
+    # Download files with progress bars
+    start_time = time.time()
+    for filename in filelist:
+        download_remote_file(hostname, filename)
+
+    # Print completion summary
+    elapsed_time = time.time() - start_time
+    print("-" * 60)
+    print(f"Downloaded {len(filelist)} file(s) in {elapsed_time:.1f} seconds")
+    print("Done")
+
+
+# CAREFUL: ERASES ALL DATA FROM WHALE TAG
+def clean_tag(hostname):
+    if not can_connect(hostname):
+        print("Could not connect to host: " + str(hostname))
+        return
+
+    stop_capture_service(hostname)
+
+    # Check if all files have been downloaded
+    filelist = create_filelist_to_download(hostname)
+    if filelist:
+        print("Not all data have been downloaded from this tag. Quitting...")
+        return
+
+    # List all files that will be deleted
+    try:
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(
+            hostname,
+            username=DEFAULT_USERNAME,
+            password=DEFAULT_PASSWORD)
+        sftp = ssh.open_sftp()
+
+        # Get list of all files in /data/
+        remote_files = sftp.listdir_attr("/data")
+        files_to_delete = [f for f in remote_files if f.filename not in [".", "..", "lost+found"]]
+
+        if not files_to_delete:
+            print("No files to delete on device " + hostname)
+            sftp.close()
+            ssh.close()
+            return
+
+        # Show what will be deleted
+        print(f"\nFiles to be deleted from device {hostname}:")
+        print("-" * 60)
+        total_size = 0
+        for file_attr in files_to_delete:
+            size_mb = file_attr.st_size / (1024**2)
+            total_size += file_attr.st_size
+            print(f"  {file_attr.filename:40s}  {size_mb:>8.2f} MB")
+        print("-" * 60)
+        print(f"Total: {len(files_to_delete)} file(s), {total_size / (1024**2):.2f} MB")
+        print()
+
+        sftp.close()
+
+        # Perform deletion
+        print(f"Erasing all collected data from device {hostname}...")
         ssh.exec_command("sudo rm -rf " + os.path.join("/data/","*.*"))
+        print("Data erased successfully")
+
+    except Exception as e:
+        print(f"Error during cleanup: {e}")
     finally:
         ssh.close()
 
