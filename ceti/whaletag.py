@@ -127,39 +127,51 @@ def create_filelist_to_download(hostname):
             hostname,
             username=DEFAULT_USERNAME,
             password=DEFAULT_PASSWORD)
+        sftp = ssh.open_sftp()
 
         # Prepare the local storage to accept the files
         local_data_folder = os.path.join(LOCAL_DATA_PATH, hostname)
         if not os.path.exists(local_data_folder):
             os.makedirs(local_data_folder)
-        local_files = os.listdir(local_data_folder)
 
-        # Check what files are available for download from the tag
-        # Ignores any folders in tag
-        remote_data_folder = os.path.normpath("/data")
-        _, stdout, _ = ssh.exec_command("ls -p " + remote_data_folder + "| grep -v /")
+        # Find all files recursively in /data, excluding swap and lost+found
+        remote_data_folder = "/data"
+        find_command = (
+            f"find {remote_data_folder} -type f "
+            f"-not -path '*/swap/*' "
+            f"-not -path '*/lost+found/*'"
+        )
+        _, stdout, stderr = ssh.exec_command(find_command)
         remote_files = stdout.readlines()
 
-        # Create the list of files to download
-        for fname in remote_files:
-            fname = fname.strip()
-            if (fname not in local_files):
-                files_to_download.append(
-                    os.path.join(remote_data_folder, fname))
+        # Process each remote file
+        for remote_path in remote_files:
+            remote_path = remote_path.strip()
+            if not remote_path:
                 continue
 
-            # Here: the file with this name is already present.
-            # Compare its hash to the local file.
-            # If different, lets re-download that file again.
-            local_sha = sha256sum(os.path.join(local_data_folder, fname))
-            _, stdout, _ = ssh.exec_command(
-                "sha256sum " + os.path.join(remote_data_folder, fname))
-            remote_sha = stdout.read().decode("utf-8").split(" ")[0]
+            # Get relative path from /data/ (e.g., "logs/syslog.log" or "audio.raw")
+            relative_path = os.path.relpath(remote_path, remote_data_folder)
+            local_path = os.path.join(local_data_folder, relative_path)
 
-            if (local_sha != remote_sha):
-                files_to_download.append(
-                    os.path.join(remote_data_folder, fname))
+            # Check if file already exists locally
+            if not os.path.exists(local_path):
+                files_to_download.append(remote_path)
+                continue
 
+            # File exists - compare hash to see if it needs re-downloading
+            try:
+                local_sha = sha256sum(local_path)
+                _, stdout, _ = ssh.exec_command(f"sha256sum {remote_path}")
+                remote_sha = stdout.read().decode("utf-8").split(" ")[0]
+
+                if local_sha != remote_sha:
+                    files_to_download.append(remote_path)
+            except:
+                # If hash comparison fails, download to be safe
+                files_to_download.append(remote_path)
+
+        sftp.close()
     finally:
         ssh.close()
     return files_to_download
@@ -184,10 +196,20 @@ def stop_capture_service(hostname):
 
 # Download a file over sftp
 def download_remote_file(hostname, remote_file):
-    local_file = os.path.join(LOCAL_DATA_PATH, hostname)
-    local_file = os.path.join(local_file, os.path.basename(remote_file))
+    # Get relative path from /data/ to preserve directory structure
+    relative_path = os.path.relpath(remote_file, "/data")
+
+    # Build local path maintaining directory structure
+    local_folder = os.path.join(LOCAL_DATA_PATH, hostname)
+    local_file = os.path.join(local_folder, relative_path)
+
+    # Create subdirectories if needed
+    local_dir = os.path.dirname(local_file)
+    if not os.path.exists(local_dir):
+        os.makedirs(local_dir, exist_ok=True)
+
     try:
-        print("Downloading " + remote_file)
+        print("Downloading " + relative_path)
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(

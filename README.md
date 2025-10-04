@@ -11,7 +11,7 @@ There are a few assumptions made in this code.
 
 2) It is assumed that the hostname is universally unique and constant.
 
-3) The [embedded software](https://github.com/Project-CETI/whale-tag-embedded/tree/main/packages/ceti-tag-set-hostname) for the whale tags actually sets the hostname that way.
+3) The [embedded software](https://github.com/Project-CETI/whale-tag-embedded/blob/c0dcc18b6fca2b4d0e44fc6c8621816daf85554d/overlay/usr/lib/raspi-config/init_resize.sh#L149) for the whale tags actually sets the hostname that way.
 
 4) Whale tags are mechanically isolated to withstand high pressures, so we assume LAN is a WiFi.
 
