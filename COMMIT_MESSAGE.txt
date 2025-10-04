@@ -1,0 +1,46 @@
+Add whale tag simulator for local testing
+
+Implements a Docker-based whale tag simulator that allows developers to test
+`ceti whaletag` commands locally without physical hardware. This enables faster
+development iteration and automated testing of whale tag data download workflows.
+
+Features:
+- Alpine Linux container (~12 MB) with SSH server and test data
+- Bridge network mode (default) - works out of the box
+- Macvlan mode (advanced) - for LAN discovery testing
+- Automated pytest integration with custom marker to exclude tests by default
+- Sample test files (audio .raw/.flac, sensors CSV) mimicking real whale tag data
+
+Changes:
+- Add Dockerfile.whaletag: Alpine-based image with openssh-server and dhcpcd
+- Add docker-compose.whaletag.yml: Container orchestration with network mode support
+- Add scripts/init-whaletag.sh: Container initialization (user setup, test data, SSH)
+- Add .env.whaletag: Configuration file with three network mode options
+- Add tests/test_whaletag_integration.py: 6 integration tests for SSH, SFTP, hostname
+- Add pytest.ini: Configure @pytest.mark.whaletag marker to exclude tests by default
+- Update Makefile: Add whaletag-up, whaletag-down, whaletag-clean, test-whaletag targets
+- Update README.md: Add whale tag simulator quick start guide
+- Add docs/TESTING.md: Comprehensive testing documentation
+
+Usage:
+  make whaletag-up
+  CONTAINER_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' wt-b827eb123456)
+  ceti whaletag -t $CONTAINER_IP
+  make whaletag-down
+
+Testing:
+  make test-whaletag  # Automated tests
+  pytest -m whaletag  # Run whale tag tests only
+  pytest              # Default - excludes whale tag tests
+
+Network modes:
+- Bridge (default): Container gets Docker IP, accessible from host
+- Host: Container shares host network (may conflict with SSH port 22)
+- Macvlan (advanced): Container gets real LAN IP via DHCP, discoverable by other machines
+
+Limitations:
+- Network discovery (ceti whaletag -l) only works in macvlan mode
+- Bridge mode requires direct connection via IP (ceti whaletag -t <IP>)
+- Macvlan mode requires manual network interface configuration
+
+Related issue: Enables local development and CI/CD testing without physical whale tags

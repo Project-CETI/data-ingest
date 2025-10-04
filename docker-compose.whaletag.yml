@@ -1,0 +1,56 @@
+services:
+  whaletag-mockup:
+    build:
+      context: .
+      dockerfile: Dockerfile.whaletag
+    image: ceti-whaletag-mockup:latest
+    container_name: ${WHALETAG_HOSTNAME:-wt-b827eb123456}
+    hostname: ${WHALETAG_HOSTNAME:-wt-b827eb123456}
+    environment:
+      - WHALETAG_HOSTNAME=${WHALETAG_HOSTNAME:-wt-b827eb123456}
+      - WHALETAG_PASSWORD=${WHALETAG_PASSWORD:-ceticeti}
+      - NETWORK_MODE=${NETWORK_MODE:-bridge}
+    volumes:
+      - whaletag-data:/data
+      - whaletag-backup:/backup
+      - ./scripts/init-whaletag.sh:/docker-entrypoint.sh
+    command: /bin/sh /docker-entrypoint.sh
+    # Network configuration depends on NETWORK_MODE in .env.whaletag
+    # NOTE: You must manually edit this file to switch modes:
+    # - For 'bridge': uncomment 'networks: default' section
+    # - For 'host': uncomment 'network_mode: host' section
+    # - For 'macvlan': uncomment 'networks: macvlan_network' section
+
+    # BRIDGE MODE (Default - works out of the box)
+    networks:
+      - default
+
+    # HOST MODE (Uncomment this, comment out 'networks' above)
+    # network_mode: host
+
+    # MACVLAN MODE (Advanced - for real LAN discovery, uncomment and configure)
+    # networks:
+    #   - macvlan_network
+    #   # No static IP - container will use DHCP
+    # dns:
+    #   - 8.8.8.8  # Google DNS
+    #   - 192.168.0.1  # Your router (fallback)
+    # cap_add:
+    #   - NET_ADMIN  # Required for DHCP client to configure network interface
+
+volumes:
+  whaletag-data:
+  whaletag-backup:
+
+networks:
+  # Default bridge network (for bridge mode)
+  default:
+    driver: bridge
+
+  # MacVLAN network (for macvlan mode)
+  # Container gets IP via DHCP from your router
+  macvlan_network:
+    driver: macvlan
+    driver_opts:
+      parent: ${NETWORK_INTERFACE:-eth0}
+    # No ipam config - uses DHCP

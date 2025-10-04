@@ -214,3 +214,37 @@ There's also a convemnience script scripts/tag.sh that does the following automa
 5) copy the back-up of compressed data to /data-backup folder
 6) upload all downloaded and compressed data to s3
 7) clean all tags
+
+### Testing
+
+#### Whale Tag Simulator
+
+Test `ceti whaletag` commands locally without physical hardware using a Docker-based simulator:
+
+```console
+# Start whale tag simulator
+make whaletag-up
+
+# Get container IP
+CONTAINER_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' wt-b827eb123456)
+
+# Test ceti whaletag command
+ceti whaletag -t $CONTAINER_IP
+
+# Or run automated tests
+make test-whaletag
+
+# Stop simulator
+make whaletag-down
+```
+
+The simulator creates a lightweight Alpine Linux container (~12 MB) with:
+- SSH server on port 22
+- Docker bridge network IP
+- User `pi` with password `ceticeti`
+- Hostname `wt-b827eb123456`
+- Sample test files in `/data/` (audio .raw/.flac, sensors CSV)
+
+**Note:** Whale tag tests are excluded from default `pytest` runs. Use `make test-whaletag` or `pytest -m whaletag` to run them explicitly.
+
+See [docs/TESTING.md](docs/TESTING.md) for complete testing documentation.
