@@ -16,6 +16,7 @@
 from argparse import Namespace
 import asyncio
 import ipaddress
+import logging
 import os
 import re
 import socket
@@ -27,6 +28,7 @@ import paramiko
 
 from ceti.utils import sha256sum
 
+logger = logging.getLogger(__name__)
 
 LOCAL_DATA_PATH = os.path.join(os.getcwd(), "data")
 DEFAULT_USBGADGET_IPNETWORK = "192.168.11.0/24"
@@ -63,7 +65,6 @@ def find_ssh_servers():
 # get hostnames for all ssh servers
 def get_hostname_by_addr(addr):
     try:
-        # Connect to the remote whale tag
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(
@@ -74,13 +75,13 @@ def get_hostname_by_addr(addr):
         hostname = stdout.readline().strip()
         ssh.close()
         return hostname
-    except:
+    except (paramiko.SSHException, OSError) as e:
+        logger.warning("Failed to get hostname for %s: %s", addr, e)
         return ""
 
 # Verify we can connect to the remote system using ssh with default credentials
 def can_connect(addr):
     try:
-        # test connecting with ssh using default tag password
         ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(
@@ -88,7 +89,14 @@ def can_connect(addr):
             username=DEFAULT_USERNAME,
             password=DEFAULT_PASSWORD)
         ssh.close()
-    except BaseException:
+    except paramiko.AuthenticationException as e:
+        logger.error("Authentication failed for %s: %s", addr, e)
+        return False
+    except paramiko.SSHException as e:
+        logger.error("SSH error connecting to %s: %s", addr, e)
+        return False
+    except OSError as e:
+        logger.error("Network error connecting to %s: %s", addr, e)
         return False
     return True
 
