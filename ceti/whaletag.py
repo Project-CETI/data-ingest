@@ -15,6 +15,7 @@
 
 from argparse import Namespace
 import asyncio
+import contextlib
 import ipaddress
 import os
 import re
@@ -48,13 +49,13 @@ def find_ssh_servers():
     for gateway_ip in getLANips():
         netspec = findssh.netfromaddress(gateway_ip)
         coro = findssh.get_hosts(netspec, 22, "ssh", 1.0)
-        sys.stdout = open(os.devnull, "w")
-        lanhosts = asyncio.run(coro)
-        sys.stdout = sys.__stdout__
+        with open(os.devnull, "w") as devnull:
+            with contextlib.redirect_stdout(devnull):
+                lanhosts = asyncio.run(coro)
         coro = findssh.get_hosts(ipaddress.IPv4Network(DEFAULT_USBGADGET_IPNETWORK), 22, "ssh", 1.0)
-        sys.stdout = open(os.devnull, "w")
-        usbhosts = asyncio.run(coro)
-        sys.stdout = sys.__stdout__
+        with open(os.devnull, "w") as devnull:
+            with contextlib.redirect_stdout(devnull):
+                usbhosts = asyncio.run(coro)
         for ip in lanhosts+usbhosts:
             result.append(str(ip[0]))
     return result
