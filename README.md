@@ -169,6 +169,52 @@ To perform actual upload to S3:
 ceti s3upload ./data
 ```
 
+## Local Development (no AWS or hardware needed)
+
+You can develop and test this project entirely on your local machine using a Docker-based whale tag mock and mocked S3.
+
+### Quick start
+
+```console
+git clone https://github.com/Project-CETI/data-ingest.git
+cd data-ingest
+make install
+make test
+```
+
+`make install` installs the package in editable mode with test dependencies (pytest, moto, flake8, mypy). `make test` runs all tests using mocked S3 -- no AWS credentials required.
+
+### Mock whale tag
+
+A Docker container simulates a real whale tag with SSH access and sample data files in `/data/`. Requires [Docker](https://docs.docker.com/get-docker/).
+
+```console
+make whaletag-up
+```
+
+This builds and starts the mock. You can then interact with it:
+
+```console
+# Download data from the mock tag via localhost
+ceti whaletag -t localhost -p 2222
+
+# Or SSH in directly to inspect it
+ssh pi@localhost -p 2222
+# password: ceticeti
+```
+
+To shut it down:
+
+```console
+make whaletag-down
+```
+
+The mock container provides:
+- Alpine Linux with SSH server (username `pi`, password `ceticeti`)
+- Hostname `wt-b827eb123456`
+- Sample audio files, CSV sensor data (battery, IMU, GPS), config, and syslogs in `/data/`
+- False positive directories (`/data/swap/`, `/data/lost+found/`) for testing download filters
+
 ## Development
 
 ### Building the package locally

@@ -1,0 +1,8 @@
+services:
+  whaletag-mock:
+    build:
+      context: ./docker/whaletag-mock
+    container_name: wt-b827eb123456
+    hostname: wt-b827eb123456
+    ports:
+      - "2222:22"

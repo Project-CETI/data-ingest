@@ -1,5 +1,23 @@
 BUMP_LEVEL := patch
 
+install:
+	pip install -e .[test]
+
+test:
+	pytest -v
+
+whaletag-up:
+	docker compose up -d --build whaletag-mock
+	@echo ""
+	@echo "Whale tag mock is running. Get its IP with:"
+	@echo "  docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' wt-b827eb123456"
+	@echo ""
+	@echo "Or connect via localhost:2222:"
+	@echo "  ssh pi@localhost -p 2222   (password: ceticeti)"
+
+whaletag-down:
+	docker compose down
+
 login:
 	@aws codeartifact login --tool pip --repository ceti --domain ceti-repo
 
