@@ -14,6 +14,7 @@
 # The username is "pi", the password is "ceticeti".
 
 from argparse import Namespace
+from contextlib import contextmanager
 import asyncio
 import ipaddress
 import os
@@ -32,6 +33,23 @@ LOCAL_DATA_PATH = os.path.join(os.getcwd(), "data")
 DEFAULT_USBGADGET_IPNETWORK = "192.168.11.0/24"
 DEFAULT_USERNAME = "pi"
 DEFAULT_PASSWORD = "ceticeti"
+
+
+@contextmanager
+def _closing_connection(connection):
+    """Close an owned connection without masking an operation's exception."""
+    try:
+        yield connection
+    except BaseException:
+        try:
+            connection.close()
+        except Exception:
+            # Preserve the original failure, including an interrupted download.
+            pass
+        raise
+    else:
+        connection.close()
+
 
 # get ALL gateway ips
 def getLANips() -> [ipaddress.IPv4Address | ipaddress.IPv6Address]:
@@ -64,16 +82,15 @@ def find_ssh_servers():
 def get_hostname_by_addr(addr):
     try:
         # Connect to the remote whale tag
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(
-            hostname=addr,
-            username=DEFAULT_USERNAME,
-            password=DEFAULT_PASSWORD)
-        _, stdout, _ = ssh.exec_command("hostname")
-        hostname = stdout.readline().strip()
-        ssh.close()
-        return hostname
+        with _closing_connection(paramiko.SSHClient()) as ssh:
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(
+                hostname=addr,
+                username=DEFAULT_USERNAME,
+                password=DEFAULT_PASSWORD)
+            _, stdout, _ = ssh.exec_command("hostname")
+            hostname = stdout.readline().strip()
+            return hostname
     except:
         return ""
 
@@ -81,13 +98,12 @@ def get_hostname_by_addr(addr):
 def can_connect(addr):
     try:
         # test connecting with ssh using default tag password
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(
-            hostname=addr,
-            username=DEFAULT_USERNAME,
-            password=DEFAULT_PASSWORD)
-        ssh.close()
+        with _closing_connection(paramiko.SSHClient()) as ssh:
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            ssh.connect(
+                hostname=addr,
+                username=DEFAULT_USERNAME,
+                password=DEFAULT_PASSWORD)
     except BaseException:
         return False
     return True
@@ -119,9 +135,8 @@ def list_whale_tags_online():
 # from the local data folder
 def create_filelist_to_download(hostname):
     files_to_download = []
-    try:
+    with _closing_connection(paramiko.SSHClient()) as ssh:
         # Connect to the remote whale tag
-        ssh = paramiko.SSHClient()
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(
             hostname,
@@ -160,8 +175,6 @@ def create_filelist_to_download(hostname):
                 files_to_download.append(
                     os.path.join(remote_data_folder, fname))
 
-    finally:
-        ssh.close()
     return files_to_download
 
 #Stops data capture service on whale tag
@@ -170,35 +183,28 @@ def stop_capture_service(hostname):
         print("Could not connect to host: " + str(hostname))
         return
     print("Stopping data capture service on whale tag " + hostname)
-    try:
-        ssh = paramiko.SSHClient()
+    with _closing_connection(paramiko.SSHClient()) as ssh:
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(
             hostname,
             username=DEFAULT_USERNAME,
             password=DEFAULT_PASSWORD)
         ssh.exec_command("sudo systemctl stop ceti-tag-data-capture")
-    finally:
-        ssh.close()
 
 
 # Download a file over sftp
 def download_remote_file(hostname, remote_file):
     local_file = os.path.join(LOCAL_DATA_PATH, hostname)
     local_file = os.path.join(local_file, os.path.basename(remote_file))
-    try:
-        print("Downloading " + remote_file)
-        ssh = paramiko.SSHClient()
+    print("Downloading " + remote_file)
+    with _closing_connection(paramiko.SSHClient()) as ssh:
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(
             hostname,
             username=DEFAULT_USERNAME,
             password=DEFAULT_PASSWORD)
-        sftp = ssh.open_sftp()
-        sftp.get(remote_file, local_file)
-    finally:
-        sftp.close()
-        ssh.close()
+        with _closing_connection(ssh.open_sftp()) as sftp:
+            sftp.get(remote_file, local_file)
 
 
 def download_all(hostname):
@@ -226,16 +232,13 @@ def clean_tag(hostname):
         print("Not all data have been downloaded from this tag. Quitting...")
         return
     print("Erasing all collected data from whale tag " + hostname)
-    try:
-        ssh = paramiko.SSHClient()
+    with _closing_connection(paramiko.SSHClient()) as ssh:
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         ssh.connect(
             hostname,
             username=DEFAULT_USERNAME,
             password=DEFAULT_PASSWORD)
         ssh.exec_command("sudo rm -rf " + os.path.join("/data/","*.*"))
-    finally:
-        ssh.close()
 
 
 def cli(args: Namespace):
