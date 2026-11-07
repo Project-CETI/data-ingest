@@ -179,8 +179,16 @@ class ConnectionTests(unittest.TestCase):
                              ("get_hostname_by_addr", "wt-offline")):
             with self.subTest(function=name):
                 self.assertEqual(getattr(self.tag, name)("wt-offline"), result)
+                self.ssh.connect.assert_called_once_with(
+                    hostname="wt-offline", username=self.tag.DEFAULT_USERNAME,
+                    password=self.tag.DEFAULT_PASSWORD,
+                )
+                if name == "get_hostname_by_addr":
+                    self.ssh.exec_command.assert_called_once_with("hostname")
+                else:
+                    self.ssh.exec_command.assert_not_called()
                 self.ssh.close.assert_called_once_with()
-                self.ssh.close.reset_mock()
+                self.ssh.reset_mock()
 
     def test_probe_failures_preserve_sentinel_and_close(self):
         for name, result in (("can_connect", False),
@@ -226,6 +234,12 @@ class ConnectionTests(unittest.TestCase):
             os.path.join(os.path.normpath("/data"), "new.raw"),
             os.path.join(os.path.normpath("/data"), "changed.raw"),
         ])
+        remote_folder = os.path.normpath("/data")
+        self.assertEqual(self.ssh.exec_command.call_args_list, [
+            mock.call("ls -p " + remote_folder + "| grep -v /"),
+            mock.call("sha256sum " + os.path.join(remote_folder, "same.raw")),
+            mock.call("sha256sum " + os.path.join(remote_folder, "changed.raw")),
+        ])
         self.ssh.close.assert_called_once_with()
 
     def test_early_returns_do_not_create_or_close_another_client(self):
@@ -250,13 +264,19 @@ class ConnectionTests(unittest.TestCase):
         return listing, stop, clean
 
     def test_single_client_operations_close_on_success(self):
+        commands = {
+            "create_filelist_to_download": "ls -p " + os.path.normpath("/data") + "| grep -v /",
+            "stop_capture_service": "sudo systemctl stop ceti-tag-data-capture",
+            "clean_tag": "sudo rm -rf " + os.path.join("/data/", "*.*"),
+        }
         for operation in self.single_client_operations():
             with self.subTest(function=operation.__name__):
                 result = operation("wt-offline")
                 self.assertEqual(result, [] if operation.__name__ ==
                                  "create_filelist_to_download" else None)
+                self.ssh.exec_command.assert_called_once_with(commands[operation.__name__])
                 self.ssh.close.assert_called_once_with()
-                self.ssh.close.reset_mock()
+                self.ssh.reset_mock()
 
     def test_single_client_constructor_failures_preserve_error(self):
         error = RuntimeError("constructor failed")
