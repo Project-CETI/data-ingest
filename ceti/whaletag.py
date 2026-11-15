@@ -233,7 +233,18 @@ def clean_tag(hostname):
             hostname,
             username=DEFAULT_USERNAME,
             password=DEFAULT_PASSWORD)
-        ssh.exec_command("sudo rm -rf " + os.path.join("/data/","*.*"))
+        _, stdout, _ = ssh.exec_command(
+            "sudo rm -rf " + os.path.join("/data/", "*.*"))
+        # Drain both streams before waiting for status, or a full SSH output
+        # window can prevent the remote command from finishing.
+        stdout.channel.set_combine_stderr(True)
+        output = stdout.read().decode("utf-8", errors="replace").strip()
+        exit_status = stdout.channel.recv_exit_status()
+        if exit_status != 0:
+            raise RuntimeError(
+                f"Failed to erase data from whale tag {hostname} "
+                f"(exit status {exit_status}): {output or 'no error output'}")
+        print("Data erased successfully")
     finally:
         ssh.close()
 
